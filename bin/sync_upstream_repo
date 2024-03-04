@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+import subprocess
+import os
+import signal
+from contextlib import contextmanager
+import re
+import sys
+
+GIT_PROJECT_ROOT = '/var/lib/git/'
+SSH_AUTH_SOCK_RE = re.compile(r'SSH_AUTH_SOCK=([^;]*);')
+SSH_AGENT_PID_RE = re.compile(r'SSH_AGENT_PID=([^;]*);')
+PROJECT_NAME_RE = re.compile(r'/(.*)\.git')
+
+@contextmanager
+def ssh_agent_session(ssh_key_path: str):
+    """ Run the context within an eval $(ssh-agent), killing the agent at the end """
+    ssh_agent_out, ssh_agent_err = subprocess.Popen('ssh-agent', stdout=subprocess.PIPE).communicate()
+    socket_line, pid_line, *_ = [l.decode() for l in ssh_agent_out.splitlines()]
+
+    socket = SSH_AUTH_SOCK_RE.search(socket_line)[1]
+    pid = SSH_AGENT_PID_RE.search(pid_line)[1]
+
+    os.environ['SSH_AUTH_SOCK'] = socket
+    os.environ['SSH_AGENT_PID'] = pid
+
+
+    try:
+        subprocess.run(['ssh-add', ssh_key_path])
+        yield
+    finally:
+        os.kill(int(pid), signal.SIGTERM)
+    
+def clone_repo(repo_url:str, ssh_key_path:str):
+    with ssh_agent_session(ssh_key_path):
+        repo_name = PROJECT_NAME_RE.search(repo_url)[1]
+        subprocess.run(['git', 'clone', repo_url, repo_name], cwd=GIT_PROJECT_ROOT)
+
+
+if __name__ == '__main__':
+    clone_repo(sys.argv[1], sys.argv[2])
