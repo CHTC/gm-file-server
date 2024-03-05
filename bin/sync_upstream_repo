@@ -4,16 +4,26 @@ import os
 import signal
 from contextlib import contextmanager
 import re
+from pathlib import Path
 import sys
 
-GIT_PROJECT_ROOT = '/var/lib/git/'
+# Location of locally cloned version of repo
+GIT_PROJECT_ROOT = Path('/var/lib/git/')
+# Extract the socket name from the stdout of ssh-agent
 SSH_AUTH_SOCK_RE = re.compile(r'SSH_AUTH_SOCK=([^;]*);')
+# Extract the agent PID from the stdout of ssh-agent
 SSH_AGENT_PID_RE = re.compile(r'SSH_AGENT_PID=([^;]*);')
+# Extract the project name from an upstream URL - assumes clone via SSH
 PROJECT_NAME_RE = re.compile(r'/(.*)\.git')
+# Extract the project host from an upstream URL - assumes clone via SSH
+PROJECT_HOST_RE = re.compile(r'git@(.*):')
+
+REPO_URL = os.environ.get('REPO_URL')
+SSH_KEY  = os.environ.get('SSH_KEY')
 
 @contextmanager
 def ssh_agent_session(ssh_key_path: str):
-    """ Run the context within an eval $(ssh-agent), killing the agent at the end """
+    """ Run the context within an eval $(ssh-agent), closing the agent at the end """
     ssh_agent_out, ssh_agent_err = subprocess.Popen('ssh-agent', stdout=subprocess.PIPE).communicate()
     socket_line, pid_line, *_ = [l.decode() for l in ssh_agent_out.splitlines()]
 
@@ -23,18 +33,40 @@ def ssh_agent_session(ssh_key_path: str):
     os.environ['SSH_AUTH_SOCK'] = socket
     os.environ['SSH_AGENT_PID'] = pid
 
-
     try:
         subprocess.run(['ssh-add', ssh_key_path])
         yield
     finally:
         os.kill(int(pid), signal.SIGTERM)
+
+def trust_upstream_host(repo_url: str):
+    """ Add a host's finger prints to known_hosts prior to cloning """
+    host = PROJECT_HOST_RE.search(repo_url)[1]
+    """ Clone the repo at the given url """
+    with open(Path.home() / '.ssh' / 'known_hosts', 'a') as known_hosts:
+        subprocess.run(['ssh-keyscan', host], stdout=known_hosts)
     
 def clone_repo(repo_url:str, ssh_key_path:str):
+    """ Clone the repo at the given url """
     with ssh_agent_session(ssh_key_path):
         repo_name = PROJECT_NAME_RE.search(repo_url)[1]
         subprocess.run(['git', 'clone', repo_url, repo_name], cwd=GIT_PROJECT_ROOT)
 
+def sync_repo(repo_url:str, ssh_key_path:str):
+    """ Hard reset the state of the repo to the given upstream """
+    with ssh_agent_session(ssh_key_path):
+        repo_name = PROJECT_NAME_RE.search(repo_url)[1]
+        repo_dir = GIT_PROJECT_ROOT / repo_name
+        branch_info, _ = subprocess.Popen(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], stdout=subprocess.PIPE, cwd=repo_dir).communicate()
+        branch_name = branch_info.decode().strip()
+        subprocess.run(['git', 'fetch', '--all'], cwd=repo_dir)
+        subprocess.run(['git', 'reset', '--hard', f'origin/{branch_name}'], cwd=repo_dir)
 
 if __name__ == '__main__':
-    clone_repo(sys.argv[1], sys.argv[2])
+    action = sys.argv[1]
+    if action == 'clone_repo':
+        clone_repo(REPO_URL, SSH_KEY)
+    elif action == 'sync_repo':
+        sync_repo(REPO_URL, SSH_KEY)
+    elif action == 'trust_repo':
+        trust_upstream_host(REPO_URL)
