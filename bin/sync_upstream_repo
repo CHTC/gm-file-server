@@ -18,7 +18,9 @@ PROJECT_NAME_RE = re.compile(r'/(.*)\.git')
 # Extract the project host from an upstream URL - assumes clone via SSH
 PROJECT_HOST_RE = re.compile(r'git@(.*):')
 
+# URL of upstream repo to use
 REPO_URL = os.environ.get('REPO_URL')
+# SSH key to use to authenticate to the upstream repo
 SSH_KEY  = os.environ.get('SSH_KEY')
 
 @contextmanager
@@ -42,7 +44,6 @@ def ssh_agent_session(ssh_key_path: str):
 def trust_upstream_host(repo_url: str):
     """ Add a host's finger prints to known_hosts prior to cloning """
     host = PROJECT_HOST_RE.search(repo_url)[1]
-    """ Clone the repo at the given url """
     with open(Path.home() / '.ssh' / 'known_hosts', 'a') as known_hosts:
         subprocess.run(['ssh-keyscan', host], stdout=known_hosts)
     

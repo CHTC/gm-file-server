@@ -1,0 +1,1 @@
+*  *  *  *  * /bin/sync_upstream_repo sync_repo >> /tmp/log.log 2>> /tmp/errors.log
