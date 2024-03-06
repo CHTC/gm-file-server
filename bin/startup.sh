@@ -4,6 +4,13 @@ HTTPD_USER=apache
 # grep is a hack to avoid overwriting home directories
 printenv | grep -v '\(HOME\|PATH\)' >> /etc/environment
 
+# Move the SSH key to a place the apache daemon can use it
+if ! cp $SSH_KEY ~$HTTPD_USER/.ssh/id_rsa && chwon apache ~$HTTPD_USER/.ssh/id_rsa; then
+  echo "Unable to move ssh key to $HTTPD_USER .ssh directory"
+  exit 1
+fi
+export SSH_KEY=~$HTTPD_USER/.ssh/id_rsa
+
 # Ensure the apache daemon user can write to the storage directory
 if ! chown $HTTPD_USER /var/lib/git ; then
   echo "$HTTP_USER cannot write to storage directory"
