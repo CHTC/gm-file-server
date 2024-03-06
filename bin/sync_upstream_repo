@@ -29,28 +29,61 @@ def ssh_agent_session(ssh_key_path: str):
     ssh_agent_out, ssh_agent_err = subprocess.Popen('ssh-agent', stdout=subprocess.PIPE).communicate()
     socket_line, pid_line, *_ = [l.decode() for l in ssh_agent_out.splitlines()]
 
-    socket = SSH_AUTH_SOCK_RE.search(socket_line)[1]
-    pid = SSH_AGENT_PID_RE.search(pid_line)[1]
+    socket_match = SSH_AUTH_SOCK_RE.search(socket_line)
+    pid_match = SSH_AGENT_PID_RE.search(pid_line)
+    if not socket_match or not pid_match:
+        raise RuntimeError(f"Unexpected ssh-agent output: {ssh_agent_out.decode()}")
 
-    os.environ['SSH_AUTH_SOCK'] = socket
-    os.environ['SSH_AGENT_PID'] = pid
+    os.environ['SSH_AUTH_SOCK'] = socket_match[1]
+    os.environ['SSH_AGENT_PID'] = pid_match[1]
 
     try:
         subprocess.run(['ssh-add', ssh_key_path])
         yield
     finally:
-        os.kill(int(pid), signal.SIGTERM)
+        os.kill(int(os.environ['SSH_AGENT_PID']), signal.SIGTERM)
+
+def get_repo_name_from_url(repo_url: str):
+    """ Extract the name of a repo from its upstream url """
+    if not (repo_name_match := PROJECT_NAME_RE.search(repo_url)):
+        raise RuntimeError(f"Unable to determine repo name from {repo_url}")
+    return repo_name_match[1]
+
 
 def trust_upstream_host(repo_url: str):
-    """ Add a host's finger prints to known_hosts prior to cloning """
-    host = PROJECT_HOST_RE.search(repo_url)[1]
+    """ Add a host's fingerprints to known_hosts prior to cloning """
+    if not (host_match := PROJECT_HOST_RE.search(repo_url)):
+        raise RuntimeError(f"Unable to determine remote upstream host name from {repo_url}")
+
     with open(Path.home() / '.ssh' / 'known_hosts', 'a') as known_hosts:
-        subprocess.run(['ssh-keyscan', host], stdout=known_hosts)
+        subprocess.run(['ssh-keyscan', host_match[1]], stdout=known_hosts)
+
+def cloned_repo_exists(repo_url: str):
+    """ Check whether the given repo is already cloned. If it is, confirm the origin is correct """
+    repo_name = get_repo_name_from_url(repo_url)
+    repo_dir = GIT_PROJECT_ROOT / repo_name
+
+    if not repo_dir.exists():
+        return False
+
+    upstream_info, _ = subprocess.Popen(['git','config','--get','remote.origin.url'],
+                                        cwd=repo_dir,stdout=subprocess.PIPE).communicate()
+    upstream_url = upstream_info.decode().strip()
+
+    if upstream_url != repo_url:
+        raise RuntimeError(f"Local version of repo has unexpected upstream {upstream_url}")
+    
+    return True
     
 def clone_repo(repo_url:str, ssh_key_path:str):
     """ Clone the repo at the given url """
+
+    if cloned_repo_exists(repo_url):
+        sync_repo(repo_url, ssh_key_path)
+        return
+
     with ssh_agent_session(ssh_key_path):
-        repo_name = PROJECT_NAME_RE.search(repo_url)[1]
+        repo_name = get_repo_name_from_url(repo_url)
         subprocess.run(['git', 'clone', repo_url, repo_name], cwd=GIT_PROJECT_ROOT)
 
 def sync_repo(repo_url:str, ssh_key_path:str):
@@ -64,6 +97,13 @@ def sync_repo(repo_url:str, ssh_key_path:str):
         subprocess.run(['git', 'reset', '--hard', f'origin/{branch_name}'], cwd=repo_dir)
 
 if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print(f"usage: {sys.argv[0]} [clone_repo|sync_repo|trust_repo]")
+        exit(1)
+    if not REPO_URL or not SSH_KEY:
+        print("Error: must specify REPO_URL and SSH_KEY environment variables")
+        exit(1)
+
     action = sys.argv[1]
     if action == 'clone_repo':
         clone_repo(REPO_URL, SSH_KEY)
