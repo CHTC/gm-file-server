@@ -1,0 +1,4 @@
+fastapi
+uvicorn
+a2wsgi
+requests
