@@ -2,8 +2,9 @@
 HTTPD_USER=apache
 
 # Move the SSH key to a place the apache daemon can use it
-cp $SSH_KEY /usr/share/httpd/.ssh/id_rsa && chown apache /usr/share/httpd/.ssh/id_rsa
-export SSH_KEY=/usr/share/httpd/.ssh/id_rsa
+SSH_KEY_DEST=/usr/share/httpd/.ssh/id_rsa
+cp $SSH_KEY $SSH_KEY_DEST && chown apache $SSH_KEY_DEST && chmod 400 $SSH_KEY_DEST
+export SSH_KEY=$SSH_KEY_DEST
 
 # copy docker env variables to a place where cron/apache will pick them up
 # grep is a hack to avoid overwriting home directories
