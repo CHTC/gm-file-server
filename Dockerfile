@@ -4,7 +4,7 @@ ENV SSH_KEY    /mnt/ssh_deploy_key
 ENV API_PREFIX /api
 
 RUN yum update -y && \
-    yum install -y git httpd gitweb crontabs cronie mod_ssl python3-pip python3-mod_wsgi && \
+    yum install -y git httpd gitweb crontabs cronie sqlite python3-pip python3-mod_wsgi && \
     yum clean all && rm -rf /var/cache/yum/*
 
 RUN mkdir /var/lib/git && chown apache:apache /var/lib/git && \
