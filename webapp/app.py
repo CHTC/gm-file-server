@@ -37,8 +37,8 @@ def get_public():
 
 def follow_up_challenge(callback_address:str, id_secret: str, challenge_secret:str):
     logger.info(f"Following up on challenge to {callback_address}")
-    resp = requests.post(callback_address, data=ChallengeCompleteRequest(id_secret=id_secret).model_dump())
-    completed_challenge = ChallengeCompleteResponse.model_validate_json(resp.json())
+    resp = requests.post(callback_address, data=ChallengeCompleteRequest(id_secret=id_secret).model_dump_json())
+    completed_challenge = ChallengeCompleteResponse.model_validate(resp.json())
     logger.info(f"Challenge status: {completed_challenge.challenge_secret == challenge_secret}")
 
 

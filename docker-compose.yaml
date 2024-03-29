@@ -1,0 +1,25 @@
+services:
+  gm-file-server:
+    image: glidein-manager-file-server
+    build: .
+    environment:
+      - REPO_URL=git@github.com:mwestphall/glidein-manager-test-upstream.git
+      - SSH_KEY=/mnt/ssh/id_rsa
+      - API_PREFIX=/api
+    volumes:
+      - ./volumes/ssh/:/mnt/ssh:ro
+      - ./volumes/git/:/var/lib/git
+    ports:
+      - "8080:80"
+  sample-client:
+    image: glidein-manager-file-server
+    build: .
+    depends_on:
+      - gm-file-server
+    environment:
+      - API_PREFIX=/api
+      - GM_ADDRESS=http://gm-file-server:80/api/public/challenge/initiate
+      - CALLBACK_ADDRESS=http://sample-client:8089/public/challenge/response
+    working_dir: /srv/app
+    entrypoint: ['uvicorn', 'client_app:app', '--host', '0.0.0.0', '--port', '8089']
+
