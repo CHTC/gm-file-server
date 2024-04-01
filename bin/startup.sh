@@ -40,5 +40,8 @@ cat /etc/apache.cron | crontab -u $HTTPD_USER -
 # Start crond in the background
 crond -s
 
+# create an htpasswd file if it doesn't exist
+touch /etc/httpd/.htpasswd && chown apache:apache /etc/httpd/.htpasswd
+
 # Start httpd
 httpd -D FOREGROUND
