@@ -18,3 +18,6 @@ class ChallengeCompleteRequest(BaseModel):
 class ChallengeCompleteResponse(BaseModel):
     challenge_secret: str = Field(description="Challenge Secret that the client returns to the server")
     capability: str = Field(description="The capability negotiated between the client and the server")
+
+class RepoListing(BaseModel):
+    name: str = Field(description="The name of the git repository")

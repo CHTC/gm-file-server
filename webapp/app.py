@@ -3,6 +3,7 @@ from os import environ
 from .models.models import *
 from .db import db
 from .util.httpd_utils import add_httpd_user
+from .util.fs_utils import list_git_repos
 from .util.wsgi_error_logging import with_error_logging
 
 import logging
@@ -20,10 +21,10 @@ def get_private():
     """ Sample endpoint that's publicly accessible """
     return {"message": "This is a public route!" }
 
-@app.get('/private')
-def get_private():
-    """ Sample endpoint that's gated by apache basic auth """
-    return {"message": "This is a secret route!" }
+@app.get('/public/git-repos')
+def get_git_repos() -> list[RepoListing]:
+    """ Get the list of git repositories available from the server """
+    return list_git_repos()
 
 @with_error_logging
 def follow_up_challenge(request: ChallengeInitiateRequest, challenge: ChallengeInitiateResponse):
