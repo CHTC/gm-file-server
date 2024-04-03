@@ -3,7 +3,7 @@ from os import environ
 from .models.models import *
 from .db import db
 from .util.httpd_utils import add_httpd_user
-from .util.wsgi_error_logging import *
+from .util.wsgi_error_logging import with_error_logging
 
 import logging
 import requests
@@ -40,7 +40,7 @@ def follow_up_challenge(request: ChallengeInitiateRequest, challenge: ChallengeI
 
 
 @app.post('/public/challenge/initiate')
-@with_async_error_logging
+@with_error_logging
 async def post_initiate_challenge(request: ChallengeInitiateRequest, background_tasks: BackgroundTasks) -> ChallengeInitiateResponse:
     """ Endpoint that allows a client to initiate the challenge/response secret
     negotiation protocol.
