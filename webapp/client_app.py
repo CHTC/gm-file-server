@@ -17,7 +17,7 @@ logger = logging.getLogger("default")
 
 GM_ADDRESS = environ['GM_ADDRESS']
 CALLBACK_ADDRESS = environ['CALLBACK_ADDRESS']
-CLIENT_NAME = 'test-client'
+CLIENT_NAME = environ['CLIENT_NAME']
 
 STATE_DICT = {
     'challenge_secret': None,
