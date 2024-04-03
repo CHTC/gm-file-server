@@ -1,6 +1,7 @@
 FROM almalinux:9
 ENV REPO_URL   git@github.com/CHTC/gm-file-server
 ENV SSH_KEY    /mnt/ssh_deploy_key
+ENV DATA_DIR   /etc/gm-file-server/data
 ENV API_PREFIX /api
 
 RUN yum update -y && \

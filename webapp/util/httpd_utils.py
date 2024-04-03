@@ -1,6 +1,7 @@
 from subprocess import Popen, PIPE
+from os import environ
 
-HTTPD_PASSWD_FILE = '/etc/httpd/.htpasswd'
+HTTPD_PASSWD_FILE = f"{environ['DATA_DIR']}/.htpasswd"
 
 def add_httpd_user(username:str, password:str):
     """ Add a new user + password to the httpd password file """

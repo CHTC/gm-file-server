@@ -14,6 +14,7 @@ def _sync_wrapper(func):
         try:
             return func(*args,**kwargs)
         except HTTPException as e:
+            logger.error(f"{e}")
             raise e
         except Exception as e:
             logger.error(f"{e}", e)
@@ -26,6 +27,7 @@ def _async_wrapper(func):
         try:
             return await func(*args,**kwargs)
         except HTTPException as e:
+            logger.error(f"{e}")
             raise e
         except Exception as e:
             logger.error(f"{e}", e)
