@@ -1,4 +1,5 @@
-# Sample script that works 
+# Sample script that acts as a client to the object server.
+
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from os import environ
 from models.models import *
