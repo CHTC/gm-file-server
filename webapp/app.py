@@ -1,10 +1,10 @@
 from fastapi import FastAPI, BackgroundTasks, HTTPException
 from os import environ
-from .models.models import *
-from .db import db
-from .util.httpd_utils import add_httpd_user
-from .util.fs_utils import list_git_repos
-from .util.wsgi_error_logging import with_error_logging
+from models.models import *
+from db import db
+from util.httpd_utils import add_httpd_user
+from util.fs_utils import list_git_repos
+from util.wsgi_error_logging import with_error_logging
 
 import logging
 import requests

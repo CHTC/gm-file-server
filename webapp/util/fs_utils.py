@@ -1,5 +1,5 @@
 from pathlib import Path
-from ..models.models import RepoListing
+from models.models import RepoListing
 GIT_HOME_DIR = Path('/var/lib/git')
 
 def list_git_repos() -> list[RepoListing]:
