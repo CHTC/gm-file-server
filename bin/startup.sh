@@ -40,5 +40,9 @@ cat /etc/apache.cron | crontab -u $HTTPD_USER -
 # Start crond in the background
 crond -s
 
+# create a data directory for persistent server data if it doesn't exist
+mkdir -p $DATA_DIR && chown apache:apache $DATA_DIR
+touch $DATA_DIR/.htpasswd && chown apache:apache $DATA_DIR/.htpasswd
+
 # Start httpd
 httpd -D FOREGROUND

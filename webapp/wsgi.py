@@ -1,9 +1,7 @@
-import sys
 import os
 from logging.config import dictConfig
-
-HERE = os.path.dirname(__file__)
-sys.path.append(HERE)
+from app import app
+from a2wsgi import ASGIMiddleware
 
 logdir = "/var/log/"
 dictConfig({
@@ -26,8 +24,5 @@ dictConfig({
     "root": {"level": "DEBUG", "handlers": ["file"]}
 })
 
-from app import app
-from a2wsgi import ASGIMiddleware
 
-
-application = ASGIMiddleware(app.app)
+application = ASGIMiddleware(app)
