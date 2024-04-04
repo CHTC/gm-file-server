@@ -21,7 +21,6 @@ COPY gitweb.conf /etc/
 COPY cron/crontab /etc/apache.cron
 COPY /bin/ /bin/
 
-COPY --chown=apache webapp/wsgi.py /srv/
 COPY --chown=apache webapp/ /srv/app/
 
 CMD /bin/startup.sh

@@ -2,14 +2,14 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 from .db_schema import Base, DbClient, DbClientChallengeSession
 from os import environ
-from ..models.models import *
+from models.models import *
 from fastapi import HTTPException
 from secrets import token_urlsafe
 import logging
 
 logger = logging.getLogger("default")
 
-engine = create_engine(f"sqlite://{environ['DATA_DIR']}/db.sqlite")
+engine = create_engine(f"sqlite:///{environ['DATA_DIR']}/db.sqlite")
 
 Base.metadata.create_all(engine)
 
