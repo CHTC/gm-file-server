@@ -22,10 +22,12 @@ def get_public():
     """ Sample endpoint that's publicly accessible """
     return {"message": "This is a public route!" }
 
-@app.get('/private')
-def get_private():
-    """ Sample endpoint that's gated by apache basic auth """
-    return {"message": "This is a secret route!" }
+@app.get('/private/verify-auth')
+def verify_auth():
+    """ Sanity check basic-auth gated endpoint. Used by clients to confirm that
+    handshake protocol succeeded. Auth is handled at the httpd layer.
+    """
+    return { "auth-status": "success" }
 
 @with_error_logging
 def follow_up_challenge(request: models.ChallengeInitiateRequest, challenge: models.ChallengeInitiateResponse):
@@ -43,10 +45,11 @@ def follow_up_challenge(request: models.ChallengeInitiateRequest, challenge: mod
         add_httpd_user(request.client_name, credentials.capability)
         # TODO There's a big opportunity for data desync if the server crashes between 
         # updating the htpassword file and updating the database
-        db.complete_challenge_session(
-            request.client_name, completed_challenge.challenge_secret, credentials)
+        db.activate_auth_session(
+            request.client_name, challenge.challenge_secret, credentials.expires)
     else:
         logger.error(f"C/R: Callback response contains incorrect challenge secret. Ignoring")
+        db.fail_auth_session(request.client_name, challenge.challenge_secret)
 
 
 @app.post('/public/challenge/initiate')
@@ -56,7 +59,7 @@ async def post_initiate_challenge(request: models.ChallengeInitiateRequest, back
     negotiation protocol.
     """
     logger.info(f"C/R: Received challenge request from {request.client_name}")
-    challenge = db.create_challenge_session(request.client_name)
+    challenge = db.create_auth_session(request.client_name)
     background_tasks.add_task(follow_up_challenge, request, challenge)
     return challenge
 
