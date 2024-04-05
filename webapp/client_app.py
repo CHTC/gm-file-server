@@ -52,10 +52,9 @@ async def post_initiate_challenge(request: models.ChallengeCompleteRequest, back
     print(f"C/R: Callback initiated by {request.id_secret}")
     if request.id_secret != STATE_DICT['id_secret']:
         raise HTTPException(403, "Unexpected ID token")
-    capability = token_urlsafe(16)
     print(f"C/R: id secret matches, replying with capability")
-    background_tasks.add_task(test_auth, capability)
-    return models.ChallengeCompleteResponse(challenge_secret=STATE_DICT['challenge_secret'], capability=capability)
+    background_tasks.add_task(test_auth, request.capability)
+    return models.ChallengeCompleteResponse(challenge_secret=STATE_DICT['challenge_secret'])
 
 def test_auth(capability: str):
     """ Step 3: Submit an authenticated request to the object server. """
