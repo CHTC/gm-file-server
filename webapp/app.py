@@ -22,7 +22,7 @@ def get_public():
     return {"message": "This is a public route!" }
 
 @app.get('/public/git-repos')
-def get_git_repos() -> list[RepoListing]:
+def get_git_repos() -> list[models.RepoListing]:
     """ Get the list of git repositories available from the server """
     return list_git_repos()
 
