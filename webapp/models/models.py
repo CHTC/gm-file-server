@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from datetime import datetime
 
 
 
@@ -14,10 +15,11 @@ class ChallengeInitiateResponse(BaseModel):
 
 class ChallengeCompleteRequest(BaseModel):
     id_secret: str = Field(description="Identifier token that the server presents to the callback_address")
+    capability: str = Field(description="The capability negotiated between the client and the server")
+    expires: datetime = Field(description="The expiry time of the negotiated capability")
 
 class ChallengeCompleteResponse(BaseModel):
     challenge_secret: str = Field(description="Challenge Secret that the client returns to the server")
-    capability: str = Field(description="The capability negotiated between the client and the server")
 
 class RepoListing(BaseModel):
     name: str = Field(description="The name of the git repository")

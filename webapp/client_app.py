@@ -54,19 +54,24 @@ async def post_initiate_challenge(request: models.ChallengeCompleteRequest, back
     print(f"C/R: Callback initiated by {request.id_secret}")
     if request.id_secret != STATE_DICT['id_secret']:
         raise HTTPException(403, "Unexpected ID token")
-    capability = token_urlsafe(16)
     print(f"C/R: id secret matches, replying with capability")
-    background_tasks.add_task(do_auth_git_pull, capability)
-    return models.ChallengeCompleteResponse(challenge_secret=STATE_DICT['challenge_secret'], capability=capability)
+    background_tasks.add_task(test_auth, request.capability)
+    return models.ChallengeCompleteResponse(challenge_secret=STATE_DICT['challenge_secret'])
 
 def do_auth_git_pull(capability: str):
     """ Step 3: Submit an authenticated git clone request to the object server. """
     time.sleep(1)
+    # Confirm that auth succeeded in previous step
+    auth_addr = f"{GM_ADDRESS}/api/private/verify-auth"
+    print(f"C/R: Sending an authenticated request to the Object Server at {auth_addr}")
+    resp = requests.get(auth_addr, auth=HTTPBasicAuth(CLIENT_NAME, capability))
+    print(resp.status_code)
+
     # cache git credentials
     credentials_file = Path.home() / '.git-credentials'
-    auth_url = GM_ADDRESS.replace('http://',f'http://{CLIENT_NAME}:{capability}@')
+    auth_git_url = GM_ADDRESS.replace('http://',f'http://{CLIENT_NAME}:{capability}@')
     with open(credentials_file, 'w') as f:
-        f.write(auth_url)
+        f.write(auth_git_url)
     
     # set git to use cached credentials
     subprocess.call(['git', 'config', '--global', 'credential.helper', 'store'])
@@ -75,5 +80,4 @@ def do_auth_git_pull(capability: str):
     list_repo_addr = f"{GM_ADDRESS}/api/public/git-repos"
     for repo in requests.get(list_repo_addr).json():
         subprocess.call(['git','clone',f'{GM_ADDRESS}/git/{repo["name"]}'])
-
 
