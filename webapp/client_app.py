@@ -55,7 +55,7 @@ async def post_initiate_challenge(request: models.ChallengeCompleteRequest, back
     if request.id_secret != STATE_DICT['id_secret']:
         raise HTTPException(403, "Unexpected ID token")
     print(f"C/R: id secret matches, replying with capability")
-    background_tasks.add_task(test_auth, request.capability)
+    background_tasks.add_task(do_auth_git_pull, request.capability)
     return models.ChallengeCompleteResponse(challenge_secret=STATE_DICT['challenge_secret'])
 
 def do_auth_git_pull(capability: str):
