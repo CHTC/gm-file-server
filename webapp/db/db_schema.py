@@ -20,7 +20,7 @@ class DbClient(Base):
 
     auth_sessions: Mapped[list["DbClientAuthSession"]] = relationship(cascade="delete")
 
-    latest_access: Mapped[list["DbClientRepoAccess"]] = relationship(cascade="delete")
+    repo_access: Mapped[list["DbClientRepoAccess"]] = relationship(cascade="delete")
 
     def __init__(self, name):
         self.name = name

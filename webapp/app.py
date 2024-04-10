@@ -24,9 +24,16 @@ def get_public():
     return {"message": "This is a public route!" }
 
 @app.get('/public/git-repos')
+@with_error_logging
 def get_git_repos() -> list[models.RepoListing]:
     """ Get the list of git repositories available from the server """
     return list_git_repos()
+
+@app.get('/public/client-status')
+@with_error_logging
+def get_client_statuses() -> list[models.ClientStatus]:
+    """ Get the list of active clients to the server, and the sync status of their git repos """
+    return db.get_all_client_statuses()
 
 @app.get('/private/verify-auth')
 def verify_auth():

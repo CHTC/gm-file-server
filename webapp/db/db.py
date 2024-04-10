@@ -90,6 +90,31 @@ def log_client_repo_access(client_name: str, repo_name: str, git_hash: str):
         session.commit()
 
 
+def get_all_client_statuses() -> list[models.ClientGitRepoStatus]:
+    """ Get the current auth token status and repo access times for each client """
+    with DbSession() as session:
+        clients : list[DbClient] = session.scalars(select(DbClient).where(DbClient.valid == True))
+        if not clients:
+            raise HTTPException(404, "No valid clients found")
+        results = []
+        for client in clients:
+            auth_state = client.auth_sessions[0].auth_state if client.auth_sessions else None
+            repo_status = [models.ClientGitRepoStatus(
+                repo_name = r.git_repo,
+                access_time = r.access_time,
+                repo_hash = r.git_hash
+            ) for r in client.repo_access]
+            results.append(models.ClientStatus(
+                client_name=client.name, 
+                auth_state=auth_state, 
+                repo_status=repo_status))
+        return results
+        
+        
+        
+        
+
+
 
 
 

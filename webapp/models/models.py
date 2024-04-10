@@ -23,3 +23,14 @@ class ChallengeCompleteResponse(BaseModel):
 
 class RepoListing(BaseModel):
     name: str = Field(description="The name of the git repository")
+
+
+class ClientGitRepoStatus(BaseModel):
+    repo_name: str
+    access_time: datetime
+    repo_hash: str
+
+class ClientStatus(BaseModel):
+    client_name: str
+    auth_state: str
+    repo_status: list[ClientGitRepoStatus]
