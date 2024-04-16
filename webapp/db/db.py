@@ -37,14 +37,14 @@ def create_auth_session(client_name: str) -> models.ChallengeInitiateResponse:
 def _get_pending_auth_session(session: Session, client_name: str, challenge_secret: str) -> DbClientAuthSession:
     client = session.scalar(select(DbClient).where(DbClient.name == client_name).where(DbClient.valid == True))
     if client is None:
-        raise HTTPException(404, "Given client name is invalid")
+        raise HTTPException(401, "Given client name is invalid")
 
     auth_session : DbClientAuthSession = session.scalar(select(DbClientAuthSession)
         .where(DbClientAuthSession.client_id == client.id)
         .where(DbClientAuthSession.challenge_secret == challenge_secret)
         .where(DbClientAuthSession.auth_state == DbAuthState.PENDING))
     if auth_session is None:
-        raise HTTPException(404, "No valid challenge/response session in progress")
+        raise HTTPException(401, "No valid challenge/response session in progress")
     return auth_session
 
 def activate_auth_session(client_name: str, challenge_secret: str, expires: datetime):
