@@ -83,7 +83,7 @@ def log_client_repo_access(client_name: str, repo_name: str, git_hash: str):
         if client_access is None:
             client_access = DbClientRepoAccess(client.id, repo_name)
         
-        client_access.git_hash = git_hash
+        client_access.commit_hash = git_hash
         client_access.access_time = datetime.now()
 
         session.add(client_access)
@@ -98,16 +98,12 @@ def get_all_client_statuses() -> list[models.ClientGitRepoStatus]:
             raise HTTPException(404, "No valid clients found")
         results = []
         for client in clients:
-            auth_state = client.auth_sessions[0].auth_state if client.auth_sessions else None
-            repo_status = [models.ClientGitRepoStatus(
-                repo_name = r.git_repo,
-                access_time = r.access_time,
-                repo_hash = r.git_hash
-            ) for r in client.repo_access]
+            latest_auth_state = sorted(client.auth_sessions, key = lambda s: s.expires, reverse=True)[0] \
+                if client.auth_sessions else None
             results.append(models.ClientStatus(
                 client_name=client.name, 
-                auth_state=auth_state, 
-                repo_status=repo_status))
+                auth_state = models.ClientAuthState.from_db(latest_auth_state), 
+                repo_access = [models.ClientGitRepoStatus.from_db(r) for r in client.repo_access]))
         return results
         
         

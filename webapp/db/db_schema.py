@@ -70,7 +70,7 @@ class DbClientRepoAccess(Base):
     client_id: Mapped[String] = mapped_column(ForeignKey('client.id'))
     
     git_repo = Column(String, nullable=False)
-    git_hash = Column(String)
+    commit_hash = Column(String)
     access_time = Column(TIMESTAMP)
 
     def __init__(self, client_id, git_repo):

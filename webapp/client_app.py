@@ -58,15 +58,17 @@ async def post_initiate_challenge(request: models.ChallengeCompleteRequest, back
     background_tasks.add_task(do_auth_git_pull, request.capability)
     return models.ChallengeCompleteResponse(challenge_secret=STATE_DICT['challenge_secret'])
 
-def do_auth_git_pull(capability: str):
-    """ Step 3: Submit an authenticated git clone request to the object server. """
-    time.sleep(1)
+def verify_auth(capability: str):
+    """ Step 3: Confirm with the object server that the auth exchange succeeded. """
     # Confirm that auth succeeded in previous step
     auth_addr = f"{GM_ADDRESS}/api/private/verify-auth"
     print(f"C/R: Sending an authenticated request to the Object Server at {auth_addr}")
     resp = requests.get(auth_addr, auth=HTTPBasicAuth(CLIENT_NAME, capability))
     print(f"C/R: Authenticated to Object Server as {resp.json()['whoami']}", flush=True)
 
+
+def do_auth_git_pull(capability: str):
+    """ Step 4: Submit an authenticated git clone request to the object server. """
     # cache git credentials
     credentials_file = Path.home() / '.git-credentials'
     auth_git_url = GM_ADDRESS.replace('http://',f'http://{CLIENT_NAME}:{capability}@')
@@ -82,4 +84,13 @@ def do_auth_git_pull(capability: str):
     for repo in requests.get(list_repo_addr).json():
         subprocess.call(['git','clone',f'{GM_ADDRESS}/git/{repo["name"]}'])
     print(f"C/R: git pull succeeded", flush=True)
+
+
+def post_auth_tasks(capability: str):
+    """ Perform tasks after authentication has succeeded """
+    time.sleep(1) # Wait for auth to complete
+
+    verify_auth(capability)
+    do_auth_git_pull(capability)
+
 
