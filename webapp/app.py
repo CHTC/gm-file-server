@@ -1,14 +1,13 @@
-from fastapi import FastAPI, BackgroundTasks, HTTPException
+from fastapi import FastAPI, BackgroundTasks, HTTPException, Request
 from os import environ
 from models import models
 from db import db
-from util.httpd_utils import add_httpd_user
+from util.httpd_utils import add_httpd_user, RequestScopeInfo
 from util.wsgi_error_logging import with_error_logging
 from secrets import token_urlsafe
 
 import logging
 import requests
-from contextlib import contextmanager
 from datetime import datetime, timedelta
 
 logger = logging.getLogger("default")
@@ -23,11 +22,12 @@ def get_public():
     return {"message": "This is a public route!" }
 
 @app.get('/private/verify-auth')
-def verify_auth():
+def verify_auth(request: Request):
     """ Sanity check basic-auth gated endpoint. Used by clients to confirm that
     handshake protocol succeeded. Auth is handled at the httpd layer.
     """
-    return { "auth-status": "success" }
+    scope_info = RequestScopeInfo(request)
+    return { "whoami": scope_info.user }
 
 @with_error_logging
 def follow_up_challenge(request: models.ChallengeInitiateRequest, challenge: models.ChallengeInitiateResponse):
