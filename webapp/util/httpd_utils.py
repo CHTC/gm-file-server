@@ -1,5 +1,9 @@
 from subprocess import Popen, PIPE
 from os import environ
+from fastapi import Request
+
+import logging
+logger = logging.getLogger("default")
 
 HTTPD_PASSWD_FILE = f"{environ['DATA_DIR']}/.htpasswd"
 
@@ -10,3 +14,10 @@ def add_httpd_user(username:str, password:str):
 
     if httpd_call.returncode:
         raise RuntimeError(f"htpasswd returned nonzero exit code: {httpd_call.returncode}: {err}")
+
+class RequestScopeInfo:
+    environ: dict
+    user: str
+    def __init__(self, request: Request):
+        self.environ = request.scope.get('wsgi_environ', {})
+        self.user = self.environ.get('REMOTE_USER', None)

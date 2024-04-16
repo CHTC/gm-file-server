@@ -52,15 +52,14 @@ async def post_initiate_challenge(request: models.ChallengeCompleteRequest, back
     print(f"C/R: Callback initiated by {request.id_secret}")
     if request.id_secret != STATE_DICT['id_secret']:
         raise HTTPException(403, "Unexpected ID token")
-    capability = token_urlsafe(16)
-    print(f"C/R: id secret matches, replying with capability")
-    background_tasks.add_task(test_auth, capability)
-    return models.ChallengeCompleteResponse(challenge_secret=STATE_DICT['challenge_secret'], capability=capability)
+    print(f"C/R: id secret matches, replying with challenge secret")
+    background_tasks.add_task(test_auth, request.capability)
+    return models.ChallengeCompleteResponse(challenge_secret=STATE_DICT['challenge_secret'])
 
 def test_auth(capability: str):
     """ Step 3: Submit an authenticated request to the object server. """
     time.sleep(1)
-    auth_addr = f"{GM_ADDRESS}/api/private"
+    auth_addr = f"{GM_ADDRESS}/api/private/verify-auth"
     print(f"C/R: Sending an authenticated request to the Object Server at {auth_addr}")
     resp = requests.get(auth_addr, auth=HTTPBasicAuth(CLIENT_NAME, capability))
-    print(resp.status_code)
+    print(f"C/R: Authenticated to Object Server as {resp.json()['whoami']}", flush=True)

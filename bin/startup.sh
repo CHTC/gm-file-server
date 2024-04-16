@@ -32,7 +32,7 @@ fi
 touch /var/log/httpd/access_log && tail -f /var/log/httpd/access_log &
 touch /var/log/httpd/error_log && tail -f /var/log/httpd/error_log &
 touch /var/log/sync_repo.log && chown $HTTPD_USER /var/log/sync_repo.log && tail -f /var/log/sync_repo.log &
-touch /var/log/wsgi.log && chown $HTTPD_USER /var/log/wsgi.log && tail -f /var/log/wsgi.log &
+mkdir /var/log/wsgi/ && touch /var/log/wsgi/wsgi.log && chown -R $HTTPD_USER /var/log/wsgi/ && tail -f /var/log/wsgi/wsgi.log &
 
 # Set the apache user's crontab 
 # TODO it would be preferable to fully configure this via the Dockerfile

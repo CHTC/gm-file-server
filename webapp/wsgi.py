@@ -1,9 +1,8 @@
 import os
 from logging.config import dictConfig
-from app import app
 from a2wsgi import ASGIMiddleware
 
-logdir = "/var/log/"
+logdir = "/var/log/wsgi/"
 dictConfig({
     "version": 1,
     "formatters": {
@@ -23,6 +22,7 @@ dictConfig({
     },
     "root": {"level": "DEBUG", "handlers": ["file"]}
 })
+from app import app
 
 
 application = ASGIMiddleware(app)
