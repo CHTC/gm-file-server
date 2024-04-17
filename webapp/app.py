@@ -3,15 +3,16 @@ from fastapi.security import HTTPBasicCredentials, HTTPBasic
 from typing import Annotated
 from models import models
 from db import db
+from sys import stdout
 from util.httpd_utils import add_httpd_user
-from util.wsgi_error_logging import with_error_logging
 from secrets import token_urlsafe
 
 import logging
 import requests
 from datetime import datetime, timedelta
 
-logger = logging.getLogger("default")
+logging.basicConfig(stream=stdout, level=logging.INFO)
+logger = logging.getLogger()
 
 app = FastAPI()
 security = HTTPBasic()
@@ -28,7 +29,6 @@ def verify_auth(credentials: Annotated[HTTPBasicCredentials, Depends(security)])
     """
     return { "whoami": credentials.username }
 
-@with_error_logging
 def follow_up_challenge(request: models.ChallengeInitiateRequest, challenge: models.ChallengeInitiateResponse):
     """ Background task that follows up on a challenge initiated by a client. """
     logger.info(f"C/R: Sending callback to {request.callback_address}")
@@ -52,7 +52,6 @@ def follow_up_challenge(request: models.ChallengeInitiateRequest, challenge: mod
 
 
 @app.post('/public/challenge/initiate')
-@with_error_logging
 async def post_initiate_challenge(request: models.ChallengeInitiateRequest, background_tasks: BackgroundTasks) -> models.ChallengeInitiateResponse:
     """ Endpoint that allows a client to initiate the challenge/response secret
     negotiation protocol.

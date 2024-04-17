@@ -32,7 +32,6 @@ fi
 touch /var/log/httpd/access_log && tail -f /var/log/httpd/access_log &
 touch /var/log/httpd/error_log && tail -f /var/log/httpd/error_log &
 touch /var/log/sync_repo.log && chown $HTTPD_USER /var/log/sync_repo.log && tail -f /var/log/sync_repo.log &
-mkdir /var/log/wsgi/ && touch /var/log/wsgi/wsgi.log && chown -R $HTTPD_USER /var/log/wsgi/ && tail -f /var/log/wsgi/wsgi.log &
 
 # Set the apache user's crontab 
 # TODO it would be preferable to fully configure this via the Dockerfile
@@ -45,7 +44,7 @@ mkdir -p $DATA_DIR && chown apache:apache $DATA_DIR
 touch $DATA_DIR/.htpasswd && chown apache:apache $DATA_DIR/.htpasswd
 
 # start fastapi
-su -l $HTTPD_USER -s /bin/bash -c "cd /srv/app; nohup uvicorn app:app --host 0.0.0.0 --port 8089 > /var/log/wsgi/wsgi.log" &
+su -l $HTTPD_USER -s /bin/bash -c "cd /srv/app; nohup uvicorn app:app --host 0.0.0.0 --port 8089" &
 
 # Start httpd
 httpd -D FOREGROUND
