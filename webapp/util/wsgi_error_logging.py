@@ -5,7 +5,7 @@ import logging
 from inspect import iscoroutinefunction
 from functools import wraps
 
-logger = logging.getLogger("default")
+logger = logging.getLogger()
 
 
 def _sync_wrapper(func):

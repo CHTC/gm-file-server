@@ -14,7 +14,7 @@ from secrets import token_urlsafe
 from pathlib import Path
 import subprocess
 
-logger = logging.getLogger("default")
+logger = logging.getLogger()
 
 
 GM_ADDRESS = environ['GM_ADDRESS']
@@ -29,7 +29,7 @@ STATE_DICT = {
 async def initiate_handshake():
     """ Step 1: Initiate the handshake with the object server. Send an unauthenticated request to
     the /challenge/initiate endpoint containing a callback to this server. """
-    await asyncio.sleep(1)
+    await asyncio.sleep(3)
     challenge_addr = f"{GM_ADDRESS}/api/public/challenge/initiate"
     print(f"C/R: Initiating challenge to {challenge_addr}")
     resp = requests.post(challenge_addr, data=
@@ -55,7 +55,7 @@ async def post_initiate_challenge(request: models.ChallengeCompleteRequest, back
     if request.id_secret != STATE_DICT['id_secret']:
         raise HTTPException(403, "Unexpected ID token")
     print(f"C/R: id secret matches, replying with challenge secret")
-    background_tasks.add_task(do_auth_git_pull, request.capability)
+    background_tasks.add_task(post_auth_tasks, request.capability)
     return models.ChallengeCompleteResponse(challenge_secret=STATE_DICT['challenge_secret'])
 
 def verify_auth(capability: str):

@@ -9,7 +9,7 @@ from datetime import datetime
 import logging
 from datetime import datetime
 
-logger = logging.getLogger("default")
+logger = logging.getLogger()
 
 engine = create_engine(f"sqlite:///{environ['DATA_DIR']}/db.sqlite")
 
