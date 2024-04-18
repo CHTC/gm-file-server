@@ -1,8 +1,9 @@
-from fastapi import FastAPI, BackgroundTasks, HTTPException, Request
-from os import environ
+from fastapi import FastAPI, BackgroundTasks, Request, Depends
+from fastapi.security import HTTPBasicCredentials, HTTPBasic
+from typing import Annotated
 from models import models
 from db import db
-from util.httpd_utils import add_httpd_user, RequestScopeInfo
+from util.httpd_utils import add_httpd_user
 from util.wsgi_error_logging import with_error_logging
 from secrets import token_urlsafe
 
@@ -12,9 +13,8 @@ from datetime import datetime, timedelta
 
 logger = logging.getLogger("default")
 
-
-api_prefix = environ['API_PREFIX']
 app = FastAPI()
+security = HTTPBasic()
 
 @app.get('/public')
 def get_public():
@@ -22,12 +22,11 @@ def get_public():
     return {"message": "This is a public route!" }
 
 @app.get('/private/verify-auth')
-def verify_auth(request: Request):
+def verify_auth(credentials: Annotated[HTTPBasicCredentials, Depends(security)]):
     """ Sanity check basic-auth gated endpoint. Used by clients to confirm that
     handshake protocol succeeded. Auth is handled at the httpd layer.
     """
-    scope_info = RequestScopeInfo(request)
-    return { "whoami": scope_info.user }
+    return { "whoami": credentials.username }
 
 @with_error_logging
 def follow_up_challenge(request: models.ChallengeInitiateRequest, challenge: models.ChallengeInitiateResponse):
@@ -62,5 +61,3 @@ async def post_initiate_challenge(request: models.ChallengeInitiateRequest, back
     challenge = db.create_auth_session(request.client_name)
     background_tasks.add_task(follow_up_challenge, request, challenge)
     return challenge
-
-#app.include_router(prefix_router)
