@@ -5,7 +5,7 @@ ENV DATA_DIR   /etc/gm-file-server/data
 ENV API_PREFIX /api
 
 RUN yum update -y && \
-    yum install -y git httpd gitweb crontabs cronie sqlite python3-pip python3-mod_wsgi && \
+    yum install -y git httpd gitweb crontabs cronie sqlite python3-pip && \
     yum clean all && rm -rf /var/cache/yum/*
 
 RUN mkdir /var/lib/git && chown apache:apache /var/lib/git && \
