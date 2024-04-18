@@ -1,21 +1,22 @@
-from fastapi import FastAPI, BackgroundTasks, HTTPException, Request
-from os import environ
+from fastapi import FastAPI, BackgroundTasks, Request, Depends
+from fastapi.security import HTTPBasicCredentials, HTTPBasic
+from typing import Annotated
 from models import models
 from db import db
-from util.httpd_utils import add_httpd_user, RequestScopeInfo
+from sys import stdout
+from util.httpd_utils import add_httpd_user
 from util.fs_utils import list_git_repos
-from util.wsgi_error_logging import with_error_logging
 from secrets import token_urlsafe
 
 import logging
 import requests
 from datetime import datetime, timedelta
 
-logger = logging.getLogger("default")
+logging.basicConfig(stream=stdout, level=logging.INFO)
+logger = logging.getLogger()
 
-
-api_prefix = environ['API_PREFIX']
 app = FastAPI()
+security = HTTPBasic()
 
 @app.get('/public')
 def get_public():
@@ -23,26 +24,22 @@ def get_public():
     return {"message": "This is a public route!" }
 
 @app.get('/public/git-repos')
-@with_error_logging
 def get_git_repos() -> list[models.RepoListing]:
     """ Get the list of git repositories available from the server """
     return list_git_repos()
 
 @app.get('/public/client-status')
-@with_error_logging
 def get_client_statuses() -> list[models.ClientStatus]:
     """ Get the list of active clients to the server, and the sync status of their git repos """
     return db.get_all_client_statuses()
 
 @app.get('/private/verify-auth')
-def verify_auth(request: Request):
+def verify_auth(credentials: Annotated[HTTPBasicCredentials, Depends(security)]):
     """ Sanity check basic-auth gated endpoint. Used by clients to confirm that
     handshake protocol succeeded. Auth is handled at the httpd layer.
     """
-    scope_info = RequestScopeInfo(request)
-    return { "whoami": scope_info.user }
+    return { "whoami": credentials.username }
 
-@with_error_logging
 def follow_up_challenge(request: models.ChallengeInitiateRequest, challenge: models.ChallengeInitiateResponse):
     """ Background task that follows up on a challenge initiated by a client. """
     logger.info(f"C/R: Sending callback to {request.callback_address}")
@@ -66,7 +63,6 @@ def follow_up_challenge(request: models.ChallengeInitiateRequest, challenge: mod
 
 
 @app.post('/public/challenge/initiate')
-@with_error_logging
 async def post_initiate_challenge(request: models.ChallengeInitiateRequest, background_tasks: BackgroundTasks) -> models.ChallengeInitiateResponse:
     """ Endpoint that allows a client to initiate the challenge/response secret
     negotiation protocol.
@@ -75,5 +71,3 @@ async def post_initiate_challenge(request: models.ChallengeInitiateRequest, back
     challenge = db.create_auth_session(request.client_name)
     background_tasks.add_task(follow_up_challenge, request, challenge)
     return challenge
-
-#app.include_router(prefix_router)

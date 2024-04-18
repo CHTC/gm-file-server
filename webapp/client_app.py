@@ -14,7 +14,7 @@ from secrets import token_urlsafe
 from pathlib import Path
 import subprocess
 
-logger = logging.getLogger("default")
+logger = logging.getLogger()
 
 
 GM_ADDRESS = environ['GM_ADDRESS']
@@ -29,7 +29,7 @@ STATE_DICT = {
 async def initiate_handshake():
     """ Step 1: Initiate the handshake with the object server. Send an unauthenticated request to
     the /challenge/initiate endpoint containing a callback to this server. """
-    await asyncio.sleep(1)
+    await asyncio.sleep(3)
     challenge_addr = f"{GM_ADDRESS}/api/public/challenge/initiate"
     print(f"C/R: Initiating challenge to {challenge_addr}")
     resp = requests.post(challenge_addr, data=
