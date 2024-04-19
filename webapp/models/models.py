@@ -25,6 +25,7 @@ class ChallengeCompleteResponse(BaseModel):
 
 class RepoListing(BaseModel):
     name: str = Field(description="The name of the git repository")
+    commit_hash: str = Field(description="Hash of the latest commit for the repository")
 
 
 class ClientGitRepoStatus(BaseModel):

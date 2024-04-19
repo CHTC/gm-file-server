@@ -76,14 +76,19 @@ def do_auth_git_pull(capability: str):
         f.write(auth_git_url)
     
     # set git to use cached credentials
-    print(f"C/R: Performing git pull")
+    print(f"Performing git pull")
     subprocess.call(['git', 'config', '--global', 'credential.helper', 'store'])
 
     # get the list of git repositories available on the server
     list_repo_addr = f"{GM_ADDRESS}/api/public/git-repos"
+    report_access_addr = f"{GM_ADDRESS}/api/private/log-repo-access"
     for repo in requests.get(list_repo_addr).json():
         subprocess.call(['git','clone',f'{GM_ADDRESS}/git/{repo["name"]}'])
-    print(f"C/R: git pull succeeded", flush=True)
+        # Report back to the server that the pull was successful
+        requests.post(report_access_addr, json=repo, auth=HTTPBasicAuth(CLIENT_NAME, capability))
+
+    print(f"Git pull(s) succeeded", flush=True)
+
 
 
 def post_auth_tasks(capability: str):

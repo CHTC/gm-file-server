@@ -40,6 +40,12 @@ def verify_auth(credentials: Annotated[HTTPBasicCredentials, Depends(security)])
     """
     return { "whoami": credentials.username }
 
+@app.post('/private/log-repo-access')
+def log_repo_access(repo: models.RepoListing, credentials: Annotated[HTTPBasicCredentials, Depends(security)]):
+    """ Endpoints for clients to report that they successfully pulled a git repo. """
+    db.log_client_repo_access(credentials.username, repo.name, repo.commit_hash)
+    return { "status": "acknowledged" }
+
 def follow_up_challenge(request: models.ChallengeInitiateRequest, challenge: models.ChallengeInitiateResponse):
     """ Background task that follows up on a challenge initiated by a client. """
     logger.info(f"C/R: Sending callback to {request.callback_address}")

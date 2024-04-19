@@ -3,11 +3,7 @@ from models.models import RepoListing
 
 GIT_HOME_DIR = Path('/var/lib/git')
 
-def list_git_repos() -> list[RepoListing]:
-    repo_dirs = [d for d in GIT_HOME_DIR.iterdir() if d.is_dir()]
-    return [RepoListing(name=d.name) for d in repo_dirs]
-
-def get_git_hash(repo_name: str) -> str:
+def get_latest_commit_hash(repo_name: str) -> str:
     """ Read the active git hash of the given repo
     TODO this is somewhat fragile, want to avoid spinning up a separate git cli instance
     for each client request though. 
@@ -26,3 +22,7 @@ def get_git_hash(repo_name: str) -> str:
     active_ref_path = GIT_HOME_DIR / repo_name / '.git' / active_ref.removeprefix('ref: ')
     with open(active_ref_path, 'r') as ref:
         return ref.read().strip()
+
+def list_git_repos() -> list[RepoListing]:
+    repo_dirs = [d for d in GIT_HOME_DIR.iterdir() if d.is_dir()]
+    return [RepoListing(name=d.name, commit_hash=get_latest_commit_hash(d.name)) for d in repo_dirs]

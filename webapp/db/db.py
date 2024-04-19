@@ -105,12 +105,3 @@ def get_all_client_statuses() -> list[models.ClientGitRepoStatus]:
                 auth_state = models.ClientAuthState.from_db(latest_auth_state), 
                 repo_access = [models.ClientGitRepoStatus.from_db(r) for r in client.repo_access]))
         return results
-        
-        
-        
-        
-
-
-
-
-

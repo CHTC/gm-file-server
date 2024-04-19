@@ -33,13 +33,6 @@ touch /var/log/httpd/access_log && tail -f /var/log/httpd/access_log &
 touch /var/log/httpd/error_log && tail -f /var/log/httpd/error_log &
 touch /var/log/sync_repo.log && chown $HTTPD_USER /var/log/sync_repo.log && tail -f /var/log/sync_repo.log &
 
-# Add a FIFO for updating the DB based on access logging
-LOG_FIFO=/tmp/httpd/access_log.pipe
-mkdir -p /tmp/httpd
-mkfifo $LOG_FIFO && chown -R $HTTPD_USER /tmp/httpd
-# Create a reader for the fifo so it doesn't block httpd on startup TODO this is hacky
-su -l $HTTPD_USER -s /bin/bash -c "cd /srv/app; nohup python3 -m scripts.pipe_db_access_logs $LOG_FIFO" &
-
 # Set the apache user's crontab 
 # TODO it would be preferable to fully configure this via the Dockerfile
 cat /etc/apache.cron | crontab -u $HTTPD_USER -

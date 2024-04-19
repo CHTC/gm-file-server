@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean, Integer, Float, DateTime, ForeignKey, TIMESTAMP
+from sqlalchemy import Column, String, Boolean, Integer, Float, DateTime, ForeignKey
 from sqlalchemy.orm import DeclarativeBase, Mapped, relationship, mapped_column
 from uuid import uuid4
 from datetime import datetime
@@ -50,6 +50,7 @@ class DbClientAuthSession(Base):
         self.id_secret = id_secret
         self.auth_state = DbAuthState.PENDING
         self.challenge_secret = challenge_secret
+        self.initiated = datetime.now()
 
     def activate(self, expires):
         self.auth_state = DbAuthState.ACTIVE
@@ -71,7 +72,7 @@ class DbClientRepoAccess(Base):
     
     git_repo = Column(String, nullable=False)
     commit_hash = Column(String)
-    access_time = Column(TIMESTAMP)
+    access_time = Column(DateTime)
 
     def __init__(self, client_id, git_repo):
         self.id = _gen_uuid()
