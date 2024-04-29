@@ -11,6 +11,8 @@ from requests.auth import HTTPBasicAuth
 import logging
 from contextlib import asynccontextmanager
 from secrets import token_urlsafe
+from pathlib import Path
+import subprocess
 
 logger = logging.getLogger()
 
@@ -53,13 +55,47 @@ async def post_initiate_challenge(request: models.ChallengeCompleteRequest, back
     if request.id_secret != STATE_DICT['id_secret']:
         raise HTTPException(403, "Unexpected ID token")
     print(f"C/R: id secret matches, replying with challenge secret")
-    background_tasks.add_task(test_auth, request.capability)
+    background_tasks.add_task(do_auth_git_pull, request.capability)
     return models.ChallengeCompleteResponse(challenge_secret=STATE_DICT['challenge_secret'])
 
-def test_auth(capability: str):
-    """ Step 3: Submit an authenticated request to the object server. """
-    time.sleep(1)
+def verify_auth(capability: str):
+    """ Step 3: Confirm with the object server that the auth exchange succeeded. """
+    # Confirm that auth succeeded in previous step
     auth_addr = f"{GM_ADDRESS}/api/private/verify-auth"
     print(f"C/R: Sending an authenticated request to the Object Server at {auth_addr}")
     resp = requests.get(auth_addr, auth=HTTPBasicAuth(CLIENT_NAME, capability))
     print(f"C/R: Authenticated to Object Server as {resp.json()['whoami']}", flush=True)
+
+
+def do_auth_git_pull(capability: str):
+    """ Step 4: Submit an authenticated git clone request to the object server. """
+    # cache git credentials
+    credentials_file = Path.home() / '.git-credentials'
+    auth_git_url = GM_ADDRESS.replace('http://',f'http://{CLIENT_NAME}:{capability}@')
+    with open(credentials_file, 'w') as f:
+        f.write(auth_git_url)
+    
+    # set git to use cached credentials
+    print(f"Performing git pull")
+    subprocess.call(['git', 'config', '--global', 'credential.helper', 'store'])
+
+    # get the list of git repositories available on the server
+    list_repo_addr = f"{GM_ADDRESS}/api/public/git-repos"
+    report_access_addr = f"{GM_ADDRESS}/api/private/log-repo-access"
+    for repo in requests.get(list_repo_addr).json():
+        subprocess.call(['git','clone',f'{GM_ADDRESS}/git/{repo["name"]}'])
+        # Report back to the server that the pull was successful
+        requests.post(report_access_addr, json=repo, auth=HTTPBasicAuth(CLIENT_NAME, capability))
+
+    print(f"Git pull(s) succeeded", flush=True)
+
+
+
+def post_auth_tasks(capability: str):
+    """ Perform tasks after authentication has succeeded """
+    time.sleep(1) # Wait for auth to complete
+
+    verify_auth(capability)
+    do_auth_git_pull(capability)
+
+

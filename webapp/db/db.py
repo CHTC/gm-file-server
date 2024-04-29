@@ -1,10 +1,11 @@
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker, Session
-from .db_schema import Base, DbClient, DbClientAuthSession, DbAuthState
+from .db_schema import Base, DbClient, DbClientAuthSession, DbAuthState, DbClientRepoAccess
 from os import environ
 from models import models
 from fastapi import HTTPException
 from secrets import token_urlsafe
+from datetime import datetime
 import logging
 from datetime import datetime
 
@@ -68,3 +69,39 @@ def fail_auth_session(client_name: str, challenge_secret: str):
         session.commit()
 
         return True # TODO what other information do we need here?
+
+
+def log_client_repo_access(client_name: str, repo_name: str, git_hash: str):
+    """ Update the state of the given client's latest access to the given repo """
+    with DbSession() as session:
+        client = session.scalar(select(DbClient).where(DbClient.name == client_name).where(DbClient.valid == True))
+        if client is None:
+            raise HTTPException(404, "Given client name is invalid")
+        client_access = session.scalar(select(DbClientRepoAccess)
+            .where(DbClientRepoAccess.client_id == client.id)
+            .where(DbClientRepoAccess.git_repo == repo_name))
+        if client_access is None:
+            client_access = DbClientRepoAccess(client.id, repo_name)
+        
+        client_access.commit_hash = git_hash
+        client_access.access_time = datetime.now()
+
+        session.add(client_access)
+        session.commit()
+
+
+def get_all_client_statuses() -> list[models.ClientGitRepoStatus]:
+    """ Get the current auth token status and repo access times for each client """
+    with DbSession() as session:
+        clients : list[DbClient] = session.scalars(select(DbClient).where(DbClient.valid == True))
+        if not clients:
+            raise HTTPException(404, "No valid clients found")
+        results = []
+        for client in clients:
+            latest_auth_state = sorted(client.auth_sessions, key = lambda s: s.expires, reverse=True)[0] \
+                if client.auth_sessions else None
+            results.append(models.ClientStatus(
+                client_name=client.name, 
+                auth_state = models.ClientAuthState.from_db(latest_auth_state), 
+                repo_access = [models.ClientGitRepoStatus.from_db(r) for r in client.repo_access]))
+        return results

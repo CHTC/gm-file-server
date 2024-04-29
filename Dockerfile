@@ -16,7 +16,7 @@ RUN curl -L https://github.com/git-lfs/git-lfs/releases/download/v3.4.1/git-lfs-
 COPY requirements.txt /srv/
 RUN pip install -r /srv/requirements.txt
 
-COPY apache.conf /etc/httpd/conf.d/
+COPY apache-conf/*.conf /etc/httpd/conf.d/
 COPY gitweb.conf /etc/
 COPY cron/crontab /etc/apache.cron
 COPY /bin/ /bin/
