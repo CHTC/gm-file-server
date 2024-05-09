@@ -79,15 +79,14 @@ def do_auth_git_pull(capability: str):
     print(f"Performing git pull")
     subprocess.call(['git', 'config', '--global', 'credential.helper', 'store'])
 
-    # get the list of git repositories available on the server
-    list_repo_addr = f"{GM_ADDRESS}/api/public/git-repos"
+    # get the status of the server's git repository
+    list_repo_addr = f"{GM_ADDRESS}/api/public/repo-status"
     report_access_addr = f"{GM_ADDRESS}/api/private/log-repo-access"
-    for repo in requests.get(list_repo_addr).json():
-        subprocess.call(['git','clone',f'{GM_ADDRESS}/git/{repo["name"]}'])
-        # Report back to the server that the pull was successful
-        requests.post(report_access_addr, json=repo, auth=HTTPBasicAuth(CLIENT_NAME, capability))
-
-    print(f"Git pull(s) succeeded", flush=True)
+    repo = requests.get(list_repo_addr).json()
+    subprocess.call(['git','clone',f'{GM_ADDRESS}/git/{repo["name"]}'])
+    # Report back to the server that the pull was successful
+    requests.post(report_access_addr, json=repo, auth=HTTPBasicAuth(CLIENT_NAME, capability))
+    print(f"Git pull succeeded", flush=True)
 
 
 

@@ -71,7 +71,7 @@ def fail_auth_session(client_name: str, challenge_secret: str):
         return True # TODO what other information do we need here?
 
 
-def log_client_repo_access(client_name: str, repo_name: str, git_hash: str):
+def log_client_repo_access(client_name: str, git_hash: str):
     """ Update the state of the given client's latest access to the given repo """
     with DbSession() as session:
         client = session.scalar(select(DbClient).where(DbClient.name == client_name).where(DbClient.valid == True))
@@ -79,11 +79,10 @@ def log_client_repo_access(client_name: str, repo_name: str, git_hash: str):
             raise HTTPException(404, "Given client name is invalid")
         client_access = session.scalar(select(DbClientRepoAccess)
             .where(DbClientRepoAccess.client_id == client.id)
-            .where(DbClientRepoAccess.git_repo == repo_name))
+            .where(DbClientRepoAccess.commit_hash == git_hash))
         if client_access is None:
-            client_access = DbClientRepoAccess(client.id, repo_name)
+            client_access = DbClientRepoAccess(client.id, git_hash)
         
-        client_access.commit_hash = git_hash
         client_access.access_time = datetime.now()
 
         session.add(client_access)
@@ -100,8 +99,11 @@ def get_all_client_statuses() -> list[models.ClientGitRepoStatus]:
         for client in clients:
             latest_auth_state = sorted(client.auth_sessions, key = lambda s: s.expires, reverse=True)[0] \
                 if client.auth_sessions else None
+            latest_repo_access = sorted(client.repo_access, key = lambda s: s.access_time, reverse=True)[0] \
+                if client.repo_access else None
             results.append(models.ClientStatus(
-                client_name=client.name, 
+                client_name = client.name, 
                 auth_state = models.ClientAuthState.from_db(latest_auth_state), 
-                repo_access = [models.ClientGitRepoStatus.from_db(r) for r in client.repo_access]))
+                repo_access = models.ClientGitRepoStatus.from_db(latest_repo_access))
+            )
         return results
