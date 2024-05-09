@@ -3,10 +3,13 @@ from fastapi.security import HTTPBasicCredentials, HTTPBasic
 from typing import Annotated
 from models import models
 from db import db
-from util import fs_utils
+from util import git_utils
 from sys import stdout
 from util.httpd_utils import add_httpd_user
 from secrets import token_urlsafe
+from scheduler import init_scheduler
+
+from contextlib import asynccontextmanager
 
 import logging
 import requests
@@ -15,7 +18,16 @@ from datetime import datetime, timedelta
 logging.basicConfig(stream=stdout, level=logging.INFO)
 logger = logging.getLogger()
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    git_utils.trust_upstream_host()
+    git_utils.clone_repo()
+    init_scheduler()
+    yield
+
+app = FastAPI(lifespan=lifespan)
+
 security = HTTPBasic()
 
 @app.get('/public')
@@ -26,7 +38,7 @@ def get_public():
 @app.get('/public/repo-status')
 def get_repo_status() -> models.RepoListing:
     """ Return the name of the git repo """
-    return fs_utils.get_repo_status()
+    return git_utils.get_repo_status()
 
 @app.get('/public/client-status')
 def get_client_statuses() -> list[models.ClientStatus]:

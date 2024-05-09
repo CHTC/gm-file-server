@@ -60,3 +60,10 @@ class ClientStatus(BaseModel):
     client_name: str
     auth_state: Optional[ClientAuthState]
     repo_access: Optional[ClientGitRepoStatus]
+
+
+class SecretVersion(BaseModel):
+    """ TODO this might just be a JWT in the future """
+    secret: str
+    iat: datetime
+    exp: datetime

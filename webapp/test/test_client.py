@@ -10,7 +10,6 @@ from requests.auth import HTTPBasicAuth
 
 import logging
 from contextlib import asynccontextmanager
-from secrets import token_urlsafe
 from pathlib import Path
 import subprocess
 

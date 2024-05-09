@@ -5,7 +5,7 @@ ENV DATA_DIR   /etc/gm-file-server/data
 ENV API_PREFIX /api
 
 RUN yum update -y && \
-    yum install -y git httpd gitweb crontabs cronie sqlite python3-pip && \
+    yum install -y git httpd gitweb sqlite python3-pip && \
     yum clean all && rm -rf /var/cache/yum/*
 
 RUN mkdir /var/lib/git && chown apache:apache /var/lib/git && \
@@ -18,7 +18,6 @@ RUN pip install -r /srv/requirements.txt
 
 COPY apache-conf/*.conf /etc/httpd/conf.d/
 COPY gitweb.conf /etc/
-COPY cron/crontab /etc/apache.cron
 COPY /bin/ /bin/
 
 COPY --chown=apache webapp/ /srv/app/
