@@ -41,5 +41,5 @@ services:
       - CALLBACK_ADDRESS=http://sample-client:8089/public/challenge/response
       - CLIENT_NAME=sample-client
     working_dir: /srv/app
-    entrypoint: ['uvicorn', 'client_app:app', '--host', '0.0.0.0', '--port', '8089']
+    entrypoint: ['uvicorn', 'test.test_client:app', '--host', '0.0.0.0', '--port', '8089']
 

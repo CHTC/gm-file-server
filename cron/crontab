@@ -1,1 +1,0 @@
-*  *  *  *  * /bin/sync_upstream_repo sync_repo >> /var/log/sync_repo.log 2>&1

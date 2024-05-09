@@ -3,10 +3,13 @@ from fastapi.security import HTTPBasicCredentials, HTTPBasic
 from typing import Annotated
 from models import models
 from db import db
+from util import git_utils
 from sys import stdout
 from util.httpd_utils import add_httpd_user
-from util.fs_utils import list_git_repos
 from secrets import token_urlsafe
+from scheduler import init_scheduler
+
+from contextlib import asynccontextmanager
 
 import logging
 import requests
@@ -15,7 +18,16 @@ from datetime import datetime, timedelta
 logging.basicConfig(stream=stdout, level=logging.INFO)
 logger = logging.getLogger()
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    git_utils.trust_upstream_host()
+    git_utils.clone_repo()
+    init_scheduler()
+    yield
+
+app = FastAPI(lifespan=lifespan)
+
 security = HTTPBasic()
 
 @app.get('/public')
@@ -23,10 +35,10 @@ def get_public():
     """ Sample endpoint that's publicly accessible """
     return {"message": "This is a public route!" }
 
-@app.get('/public/git-repos')
-def get_git_repos() -> list[models.RepoListing]:
-    """ Get the list of git repositories available from the server """
-    return list_git_repos()
+@app.get('/public/repo-status')
+def get_repo_status() -> models.RepoListing:
+    """ Return the name of the git repo """
+    return git_utils.get_repo_status()
 
 @app.get('/public/client-status')
 def get_client_statuses() -> list[models.ClientStatus]:
@@ -43,7 +55,7 @@ def verify_auth(credentials: Annotated[HTTPBasicCredentials, Depends(security)])
 @app.post('/private/log-repo-access')
 def log_repo_access(repo: models.RepoListing, credentials: Annotated[HTTPBasicCredentials, Depends(security)]):
     """ Endpoints for clients to report that they successfully pulled a git repo. """
-    db.log_client_repo_access(credentials.username, repo.name, repo.commit_hash)
+    db.log_client_repo_access(credentials.username, repo.commit_hash)
     return { "status": "acknowledged" }
 
 def follow_up_challenge(request: models.ChallengeInitiateRequest, challenge: models.ChallengeInitiateResponse):

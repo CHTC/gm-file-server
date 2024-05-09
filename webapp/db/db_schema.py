@@ -64,18 +64,17 @@ class DbClientAuthSession(Base):
         self.id_secret = None
 
 class DbClientRepoAccess(Base):
-    """ Table for tracking the latest version of a git repo accessed by a client """
+    """ Table for tracking the latest version of the git repo accessed by a client """
     __tablename__ = "client_git_access"
     
     id = Column(String, primary_key=True, default = _gen_uuid)
     client_id: Mapped[String] = mapped_column(ForeignKey('client.id'))
     
-    git_repo = Column(String, nullable=False)
     commit_hash = Column(String)
     access_time = Column(DateTime)
 
-    def __init__(self, client_id, git_repo):
+    def __init__(self, client_id, commit_hash):
         self.id = _gen_uuid()
         self.client_id = client_id
-        self.git_repo = git_repo
+        self.commit_hash = commit_hash
 

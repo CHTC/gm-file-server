@@ -24,12 +24,12 @@ class ChallengeCompleteResponse(BaseModel):
     challenge_secret: str = Field(description="Challenge Secret that the client returns to the server")
 
 class RepoListing(BaseModel):
-    name: str = Field(description="The name of the git repository")
+    name: Optional[str] = Field(description="Name of the repository on disk")
+    upstream: Optional[str] = Field(description="URL of the upstream for the repository")
     commit_hash: str = Field(description="Hash of the latest commit for the repository")
 
 
 class ClientGitRepoStatus(BaseModel):
-    repo_name: str
     access_time: datetime
     commit_hash: str
 
@@ -39,7 +39,6 @@ class ClientGitRepoStatus(BaseModel):
             return None
         
         return ClientGitRepoStatus(
-            repo_name=entity.git_repo,
             access_time=entity.access_time,
             commit_hash=entity.commit_hash
         )
@@ -60,4 +59,11 @@ class ClientAuthState(BaseModel):
 class ClientStatus(BaseModel):
     client_name: str
     auth_state: Optional[ClientAuthState]
-    repo_access: list[ClientGitRepoStatus]
+    repo_access: Optional[ClientGitRepoStatus]
+
+
+class SecretVersion(BaseModel):
+    """ TODO this might just be a JWT in the future """
+    secret: str
+    iat: datetime
+    exp: datetime
