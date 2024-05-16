@@ -69,6 +69,23 @@ class DbClientAuthChallenge(Base):
         self.id_secret = id_secret
         self.challenge_secret = challenge_secret
 
+
+class DbGitCommit(Base):
+    """ Table for tracking the Git Commits that have been the HEAD """
+
+    __tablename__ = "repo_commits"
+
+    commit_hash = Column(String, primary_key=True)
+
+    commit_time = Column(DateTime)
+
+    sync_time = Column(DateTime)
+
+    def __init__(self, commit_hash, commit_time):
+        self.commit_hash = commit_hash
+        self.commit_time = commit_time
+        self.sync_time = datetime.now()
+
 class DbClientCommitAccess(Base):
     """ Table for tracking the latest version of the git repo accessed by a client """
     __tablename__ = "client_commit_access"
@@ -76,7 +93,7 @@ class DbClientCommitAccess(Base):
     id = Column(String, primary_key=True, default = _gen_uuid)
     client_id: Mapped[String] = mapped_column(ForeignKey('client.id'))
     
-    commit_hash = Column(String)
+    commit_hash: Mapped[String] = mapped_column(ForeignKey('repo_commits.commit_hash'))
     access_time = Column(DateTime)
 
     def __init__(self, client_id, commit_hash):

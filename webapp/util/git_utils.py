@@ -7,6 +7,8 @@ import re
 from pathlib import Path
 import sys
 from models.models import RepoListing
+from datetime import datetime
+from db.db import log_commit_fetch
 
 # Location of locally cloned version of repo
 GIT_PROJECT_ROOT = Path('/var/lib/git/')
@@ -79,6 +81,17 @@ def cloned_repo_exists(repo_url: str):
         raise RuntimeError(f"Local version of repo has unexpected upstream {upstream_url}")
     
     return True
+
+def log_latest_commit():
+    """ Add an entry to the access tracking database indicating that a new commit has been
+    pulled from upstream 
+    """
+    repo_dir = GIT_PROJECT_ROOT / PROJECT_NAME
+    commit_info, _ = subprocess.Popen(['git','show','--no-patch','--format=%H,%ct','HEAD'],
+                                      stdout=subprocess.PIPE, cwd=repo_dir).communicate()
+    commit_hash, commit_timestamp = commit_info.decode().strip().split(',')
+    log_commit_fetch(commit_hash, datetime.fromtimestamp(int(commit_timestamp)))
+
     
 def clone_repo():
     """ Clone the repo at the given url """
@@ -90,6 +103,7 @@ def clone_repo():
     with ssh_agent_session(SSH_KEY):
         repo_name = get_repo_name_from_url(REPO_URL)
         subprocess.run(['git', 'clone', REPO_URL, repo_name], cwd=GIT_PROJECT_ROOT)
+        log_latest_commit()
 
 def sync_repo():
     """ Hard reset the state of the repo to the given upstream """
@@ -100,6 +114,7 @@ def sync_repo():
         branch_name = branch_info.decode().strip()
         subprocess.run(['git', 'fetch', '--all'], cwd=repo_dir)
         subprocess.run(['git', 'reset', '--hard', f'origin/{branch_name}'], cwd=repo_dir)
+        log_latest_commit()
 
 def get_latest_commit_hash() -> str:
     """ Read the active git hash of the repo

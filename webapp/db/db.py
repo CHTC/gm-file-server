@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker, Session
-from .db_schema import Base, DbClient, DbClientAuthEvent, DbAuthState, DbClientCommitAccess, DbClientAuthChallenge
+from .db_schema import Base, DbClient, DbClientAuthEvent, DbAuthState, DbClientCommitAccess, DbClientAuthChallenge, DbGitCommit
 from os import environ
 from models import models
 from fastapi import HTTPException
@@ -112,3 +112,13 @@ def get_all_client_statuses() -> list[models.ClientGitRepoStatus]:
                 repo_access = models.ClientGitRepoStatus.from_db(latest_repo_access))
             )
         return results
+
+def log_commit_fetch(commit_hash: str, commit_time: datetime):
+    """ Log that a new commit has been pulled from the upstream """
+    with DbSession() as session:
+        exiting_commit = session.scalar(select(DbGitCommit).where(DbGitCommit.commit_hash == commit_hash))
+        if exiting_commit is not None:
+            return # No-op
+        
+        session.add(DbGitCommit(commit_hash, commit_time))
+        session.commit()
