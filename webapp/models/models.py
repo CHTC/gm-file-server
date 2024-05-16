@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
-from db.db_schema import DbClientRepoAccess, DbClientAuthSession
+from db.db_schema import DbClientCommitAccess, DbClientAuthEvent
 
 
 
@@ -34,7 +34,7 @@ class ClientGitRepoStatus(BaseModel):
     commit_hash: str
 
     @classmethod
-    def from_db(cls, entity: DbClientRepoAccess):
+    def from_db(cls, entity: DbClientCommitAccess):
         if entity is None:
             return None
         
@@ -48,7 +48,7 @@ class ClientAuthState(BaseModel):
     expires: Optional[datetime]
 
     @classmethod
-    def from_db(cls, entity: DbClientAuthSession):
+    def from_db(cls, entity: DbClientAuthEvent):
         if entity is None:
             return None
         

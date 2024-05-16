@@ -18,9 +18,9 @@ class DbClient(Base):
     name = Column(String, unique=True, nullable=False)
     valid = Column(Boolean, default=True)
 
-    auth_sessions: Mapped[list["DbClientAuthSession"]] = relationship(cascade="delete")
+    auth_sessions: Mapped[list["DbClientAuthEvent"]] = relationship(cascade="delete")
 
-    repo_access: Mapped[list["DbClientRepoAccess"]] = relationship(cascade="delete")
+    repo_access: Mapped[list["DbClientCommitAccess"]] = relationship(cascade="delete")
 
     def __init__(self, name):
         self.name = name
@@ -31,41 +31,47 @@ class DbAuthState(str, Enum):
     ACTIVE = 'ACTIVE'
     FAILED = 'FAILED'
 
-class DbClientAuthSession(Base):
+class DbClientAuthEvent(Base):
     """ Table for tracking in-progress challenge/response sessions with a client """
     __tablename__ = "client_auth_sessions"
     id = Column(String, primary_key=True, default = _gen_uuid)
     client_id: Mapped[String] = mapped_column(ForeignKey('client.id'))
     auth_state = Column(String, nullable=False)
 
-    id_secret = Column(String, unique=True)
-    challenge_secret = Column(String, unique=True)
-
     initiated = Column(DateTime, default=datetime.now())
     expires   = Column(DateTime, default=datetime.now())
 
-    def __init__(self, client_id, id_secret, challenge_secret):
+    challenge: Mapped["DbClientAuthChallenge"] = relationship(cascade="delete")
+
+    def __init__(self, client_id):
         self.id = _gen_uuid()
         self.client_id = client_id
-        self.id_secret = id_secret
         self.auth_state = DbAuthState.PENDING
-        self.challenge_secret = challenge_secret
         self.initiated = datetime.now()
 
     def activate(self, expires):
         self.auth_state = DbAuthState.ACTIVE
         self.expires = expires
-        self.challenge_secret = None
-        self.id_secret = None
     
     def fail(self):
         self.auth_state = DbAuthState.FAILED
-        self.challenge_secret = None
-        self.id_secret = None
 
-class DbClientRepoAccess(Base):
+class DbClientAuthChallenge(Base):
+    __tablename__ = "client_auth_challenges"
+
+    auth_event_id: Mapped[String] = mapped_column(ForeignKey('client_auth_sessions.id'), primary_key=True)
+
+    id_secret = Column(String, unique=True)
+    challenge_secret = Column(String, unique=True)
+
+    def __init__(self, auth_event_id, id_secret, challenge_secret):
+        self.auth_event_id = auth_event_id
+        self.id_secret = id_secret
+        self.challenge_secret = challenge_secret
+
+class DbClientCommitAccess(Base):
     """ Table for tracking the latest version of the git repo accessed by a client """
-    __tablename__ = "client_git_access"
+    __tablename__ = "client_commit_access"
     
     id = Column(String, primary_key=True, default = _gen_uuid)
     client_id: Mapped[String] = mapped_column(ForeignKey('client.id'))
