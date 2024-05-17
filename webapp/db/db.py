@@ -75,7 +75,6 @@ def fail_auth_session(client_name: str, challenge_secret: str):
 
         return True # TODO what other information do we need here?
 
-
 def log_client_repo_access(client_name: str, git_hash: str):
     """ Update the state of the given client's latest access to the given repo """
     with DbSession() as session:
@@ -93,25 +92,26 @@ def log_client_repo_access(client_name: str, git_hash: str):
         session.add(client_access)
         session.commit()
 
+def _get_current_status_for_client(client: DbClient) -> models.ClientAccessStatus:
+    latest_auth_state = sorted(client.auth_sessions, key = lambda s: s.expires, reverse=True)[0] \
+        if client.auth_sessions else None
+    latest_repo_access = sorted(client.repo_access, key = lambda s: s.access_time, reverse=True)[0] \
+        if client.repo_access else None
+    return models.ClientStatus(
+        client_name = client.name, 
+        auth_state = models.ClientAuthState.from_db(latest_auth_state), 
+        repo_access = models.ClientAccessStatus.from_db(latest_repo_access))
 
-def get_all_client_statuses() -> list[models.ClientGitRepoStatus]:
+def get_current_client_status(client_name: str) -> models.ClientAccessStatus:
+    """ Get the current auth token status and repo status of the given client """
+
+def get_current_client_statuses() -> list[models.ClientAccessStatus]:
     """ Get the current auth token status and repo access times for each client """
     with DbSession() as session:
         clients : list[DbClient] = session.scalars(select(DbClient).where(DbClient.valid == True))
         if not clients:
             raise HTTPException(404, "No valid clients found")
-        results = []
-        for client in clients:
-            latest_auth_state = sorted(client.auth_sessions, key = lambda s: s.expires, reverse=True)[0] \
-                if client.auth_sessions else None
-            latest_repo_access = sorted(client.repo_access, key = lambda s: s.access_time, reverse=True)[0] \
-                if client.repo_access else None
-            results.append(models.ClientStatus(
-                client_name = client.name, 
-                auth_state = models.ClientAuthState.from_db(latest_auth_state), 
-                repo_access = models.ClientGitRepoStatus.from_db(latest_repo_access))
-            )
-        return results
+        return [_get_current_status_for_client(client) for client in clients]
 
 def log_commit_fetch(commit_hash: str, commit_time: datetime):
     """ Log that a new commit has been pulled from the upstream """

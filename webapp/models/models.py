@@ -29,7 +29,7 @@ class RepoListing(BaseModel):
     commit_hash: str = Field(description="Hash of the latest commit for the repository")
 
 
-class ClientGitRepoStatus(BaseModel):
+class ClientAccessStatus(BaseModel):
     access_time: datetime
     commit_hash: str
 
@@ -38,13 +38,14 @@ class ClientGitRepoStatus(BaseModel):
         if entity is None:
             return None
         
-        return ClientGitRepoStatus(
+        return ClientAccessStatus(
             access_time=entity.access_time,
             commit_hash=entity.commit_hash
         )
 
 class ClientAuthState(BaseModel):
     state: str
+    initiated: Optional[datetime]
     expires: Optional[datetime]
 
     @classmethod
@@ -54,12 +55,13 @@ class ClientAuthState(BaseModel):
         
         return ClientAuthState(
             state=entity.auth_state,
+            initiated=entity.initiated,
             expires=entity.expires)
 
 class ClientStatus(BaseModel):
     client_name: str
     auth_state: Optional[ClientAuthState]
-    repo_access: Optional[ClientGitRepoStatus]
+    repo_access: Optional[ClientAccessStatus]
 
 
 class SecretVersion(BaseModel):

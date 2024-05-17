@@ -43,7 +43,7 @@ def get_repo_status() -> models.RepoListing:
 @app.get('/public/client-status')
 def get_client_statuses() -> list[models.ClientStatus]:
     """ Get the list of active clients to the server, and the sync status of their git repos """
-    return db.get_all_client_statuses()
+    return db.get_current_client_statuses()
 
 @app.get('/private/verify-auth')
 def verify_auth(credentials: Annotated[HTTPBasicCredentials, Depends(security)]):

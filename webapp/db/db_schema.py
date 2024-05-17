@@ -23,6 +23,7 @@ class DbClient(Base):
     repo_access: Mapped[list["DbClientCommitAccess"]] = relationship(cascade="delete")
 
     def __init__(self, name):
+        self.id = _gen_uuid()
         self.name = name
         self.valid = True
 
@@ -38,7 +39,7 @@ class DbClientAuthEvent(Base):
     client_id: Mapped[String] = mapped_column(ForeignKey('client.id'))
     auth_state = Column(String, nullable=False)
 
-    initiated = Column(DateTime, default=datetime.now())
+    initiated = Column(DateTime, default=datetime.now(), index=True)
     expires   = Column(DateTime, default=datetime.now())
 
     challenge: Mapped["DbClientAuthChallenge"] = relationship(cascade="delete")
@@ -96,8 +97,25 @@ class DbClientCommitAccess(Base):
     commit_hash: Mapped[String] = mapped_column(ForeignKey('repo_commits.commit_hash'))
     access_time = Column(DateTime)
 
-    def __init__(self, client_id, commit_hash):
+    def __init__(self, client_id, commit_hash, access_time = None):
         self.id = _gen_uuid()
         self.client_id = client_id
         self.commit_hash = commit_hash
+        self.access_time = access_time
+
+
+class DbClientLatestState(Base):
+    __tablename__ = "__client_latest_state"
+
+    id = Column(String, primary_key=True, default = _gen_uuid)
+    name = Column(String, unique=True, nullable=False)
+
+    auth_state = Column(String, nullable=False)
+
+    initiated = Column(DateTime, default=datetime.now(), index=True)
+    expires   = Column(DateTime, default=datetime.now())
+
+    commit_hash = Column(String)
+    access_time = Column(DateTime)
+
 
