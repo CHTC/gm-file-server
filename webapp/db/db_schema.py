@@ -104,7 +104,7 @@ class DbClientCommitAccess(Base):
         self.access_time = access_time
 
 
-class DbClientLatestState(Base):
+class DbClientStateView(Base):
     __tablename__ = "__client_latest_state"
 
     id = Column(String, primary_key=True, default = _gen_uuid)

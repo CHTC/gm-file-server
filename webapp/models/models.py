@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
-from db.db_schema import DbClientCommitAccess, DbClientAuthEvent
+from db.db_schema import DbClientCommitAccess, DbClientAuthEvent, DbClientStateView
 
 
 
@@ -62,6 +62,19 @@ class ClientStatus(BaseModel):
     client_name: str
     auth_state: Optional[ClientAuthState]
     repo_access: Optional[ClientAccessStatus]
+
+    @classmethod
+    def from_db(cls, entity: DbClientStateView):
+        return ClientStatus(
+            client_name=entity.name,
+            auth_state=ClientAuthState(
+                state=entity.auth_state,
+                initiated=entity.initiated,
+                expires=entity.expires) if entity.auth_state else None,
+            repo_access=ClientAccessStatus(
+                access_time=entity.access_time,
+                commit_hash=entity.commit_hash) if entity.commit_hash else None)
+
 
 
 class SecretVersion(BaseModel):

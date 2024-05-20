@@ -8,6 +8,7 @@ from sys import stdout
 from util.httpd_utils import add_httpd_user
 from secrets import token_urlsafe
 from scheduler import init_scheduler
+from typing import Optional
 
 from contextlib import asynccontextmanager
 
@@ -37,13 +38,16 @@ def get_public():
 
 @app.get('/public/repo-status')
 def get_repo_status() -> models.RepoListing:
-    """ Return the name of the git repo """
+    """ Return the name and latest commit of the git repo """
     return git_utils.get_repo_status()
 
 @app.get('/public/client-status')
-def get_client_statuses() -> list[models.ClientStatus]:
+def get_client_statuses(
+        report_time: Optional[datetime] = None, 
+        auth_state: Optional[db.DbAuthState] = None, 
+        latest_commit: Optional[bool] = None) -> list[models.ClientStatus]:
     """ Get the list of active clients to the server, and the sync status of their git repos """
-    return db.get_current_client_statuses()
+    return db.get_client_status_report(report_time, auth_state, latest_commit)
 
 @app.get('/private/verify-auth')
 def verify_auth(credentials: Annotated[HTTPBasicCredentials, Depends(security)]):

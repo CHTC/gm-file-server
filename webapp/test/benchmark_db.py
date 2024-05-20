@@ -1,6 +1,6 @@
 from db.db import DbSession
 from sqlalchemy import select, text
-from db.db_schema import DbClient, DbGitCommit, DbClientCommitAccess, DbClientAuthEvent, DbAuthState, DbClientLatestState
+from db.db_schema import DbClient, DbGitCommit, DbClientCommitAccess, DbClientAuthEvent, DbAuthState, DbClientStateView
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from functools import wraps
@@ -83,7 +83,7 @@ def find_latest_auth_window():
 @with_time_logging
 def find_latest_auth_inner_query():
     with DbSession() as session:
-        auth_sessions = session.query(DbClientLatestState).from_statement(text("""
+        auth_sessions = session.query(DbClientStateView).from_statement(text("""
         WITH latest_auth AS (
             SELECT client_auth_sessions.* FROM client
             LEFT JOIN client_auth_sessions ON client.id = client_auth_sessions.client_id
