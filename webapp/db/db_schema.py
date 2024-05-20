@@ -29,7 +29,7 @@ class DbClient(Base):
 
 class DbAuthState(str, Enum):
     PENDING = 'PENDING'
-    ACTIVE = 'ACTIVE'
+    SUCCESSFUL = 'SUCCESSFUL'
     FAILED = 'FAILED'
 
 class DbClientAuthEvent(Base):
@@ -51,7 +51,7 @@ class DbClientAuthEvent(Base):
         self.initiated = datetime.now()
 
     def activate(self, expires):
-        self.auth_state = DbAuthState.ACTIVE
+        self.auth_state = DbAuthState.SUCCESSFUL
         self.expires = expires
     
     def fail(self):

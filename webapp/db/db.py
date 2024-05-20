@@ -104,7 +104,7 @@ def log_commit_fetch(commit_hash: str, commit_time: datetime):
         session.commit()
 
 
-def get_client_status_report(report_time: datetime = None, auth_state: DbAuthState = None, latest_commit: bool = None) -> list[models.ClientAccessStatus]:
+def get_client_status_report(report_time: datetime = None, auth_state: models.AuthStateQuery = None, latest_commit: bool = None) -> list[models.ClientAccessStatus]:
     """ Get the current auth token status and repo access times for each client """
     with DbSession() as session:
         client_states = query_client_states(session, report_time, auth_state, latest_commit)

@@ -8,7 +8,7 @@ from sys import stdout
 from util.httpd_utils import add_httpd_user
 from secrets import token_urlsafe
 from scheduler import init_scheduler
-from typing import Optional
+from typing import Optional, Literal
 
 from contextlib import asynccontextmanager
 
@@ -44,7 +44,7 @@ def get_repo_status() -> models.RepoListing:
 @app.get('/public/client-status')
 def get_client_statuses(
         report_time: Optional[datetime] = None, 
-        auth_state: Optional[db.DbAuthState] = None, 
+        auth_state: Optional[models.AuthStateQuery] = models.AuthStateQuery.ANY,
         latest_commit: Optional[bool] = None) -> list[models.ClientStatus]:
     """ Get the list of active clients to the server, and the sync status of their git repos """
     return db.get_client_status_report(report_time, auth_state, latest_commit)

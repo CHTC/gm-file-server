@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from enum import Enum
 from typing import Optional
 from datetime import datetime
 from db.db_schema import DbClientCommitAccess, DbClientAuthEvent, DbClientStateView
@@ -82,3 +83,17 @@ class SecretVersion(BaseModel):
     secret: str
     iat: datetime
     exp: datetime
+
+
+class AuthStateQuery(Enum):
+    """ Query parameter enum for  """
+    # Auth states that are recorded in the DB
+    PENDING = 'PENDING'
+    SUCCESSFUL = 'SUCCESSFUL'
+    FAILED = 'FAILED'
+    # A successful auth entry whose expiration has passed
+    EXPIRED = 'EXPIRED'
+    # Do not filter on auth state in the query
+    ANY = 'ANY'
+    # Has not yet attempted to authenticate
+    NONE = 'NONE'

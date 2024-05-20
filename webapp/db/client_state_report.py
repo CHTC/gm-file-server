@@ -1,6 +1,7 @@
 from sqlalchemy import select, text
-from db.db_schema import DbClient, DbGitCommit, DbClientCommitAccess, DbClientAuthEvent, DbAuthState, DbClientStateView
+from db.db_schema import DbGitCommit, DbClientStateView
 from sqlalchemy.orm import Session
+from models.models import AuthStateQuery
 from datetime import datetime, timedelta
 from functools import wraps
 
@@ -29,16 +30,21 @@ WITH latest_auth AS (
 )
 SELECT 
     client.id, client.name,
-    latest_auth.auth_state, latest_auth.initiated, latest_auth.expires,
+    CASE 
+        WHEN latest_auth.auth_state = 'SUCCESSFUL' AND latest_auth.expires < :report_time THEN 'EXPIRED'
+        ELSE latest_auth.auth_state
+    END auth_state, 
+    latest_auth.initiated, latest_auth.expires,
     latest_commit.commit_hash, latest_commit.access_time
 FROM client
 LEFT JOIN latest_auth ON latest_auth.client_id = client.id
 LEFT JOIN latest_commit ON latest_commit.client_id = client.id
-WHERE (:auth_state IS NULL OR latest_auth.auth_state = :auth_state)
-AND   (:commit_hash IS NULL OR latest_commit.commit_hash = :commit_hash)
+-- TODO These are some ugly where clauses to handle nullable fields
+WHERE (:auth_state = 'ANY' OR latest_auth.auth_state = :auth_state OR (:auth_state IS NULL AND latest_auth.auth_state is NULL))
+AND   (:latest_commit IS NULL OR (COALESCE(latest_commit.commit_hash = :commit_hash, 0)) = :latest_commit)
 """
 
-def query_client_states(session: Session, report_time: datetime = None, auth_state: DbAuthState = None, latest_commit: bool = None) -> list[DbClientStateView]:
+def query_client_states(session: Session, report_time: datetime = None, auth_state: AuthStateQuery = 'ANY', latest_commit: bool = None) -> list[DbClientStateView]:
     """ Query the database for the last-reported state of every client at the given timestamp,
     optionally filtering on a given state """
     report_timestamp = report_time or datetime.now()
@@ -46,11 +52,12 @@ def query_client_states(session: Session, report_time: datetime = None, auth_sta
     commit_hash = session.scalars(select(DbGitCommit)
         .where(DbGitCommit.commit_time <= report_timestamp)
         .order_by(DbGitCommit.commit_time.desc())
-        .limit(1)).first().commit_hash if latest_commit else None
+        .limit(1)).first().commit_hash if latest_commit is not None else None
 
     return session.query(DbClientStateView).from_statement(text(REPORT_SQL)).params({
         'report_time': report_timestamp,
-        'auth_state': auth_state,
+        'auth_state': None if auth_state == AuthStateQuery.NONE else auth_state.value,
+        'latest_commit': latest_commit,
         'commit_hash': commit_hash
     }).all()
  

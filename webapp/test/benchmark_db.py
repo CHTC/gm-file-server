@@ -31,7 +31,7 @@ def _add_git_commits(session: Session, client: DbClient):
 def _add_access_logs(session: Session, client: DbClient):
     for i in range(AUTH_COUNT):
         auth_event = DbClientAuthEvent(client.id)
-        auth_event.auth_state = DbAuthState.ACTIVE
+        auth_event.auth_state = DbAuthState.SUCCESSFUL
         auth_event.initiated = START_TIME - timedelta(hours=2*i)
         auth_event.expires = auth_event.initiated + timedelta(hours=2)
         session.add(auth_event)
