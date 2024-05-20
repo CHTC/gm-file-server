@@ -105,7 +105,13 @@ class DbClientCommitAccess(Base):
 
 
 class DbClientStateView(Base):
-    __tablename__ = "__client_latest_state"
+    """
+    Db Model class for the non-manifested view that displays the latest state for each client
+    prior to a given timestamp (see client_state_report.py)
+    # TODO figure out a way to explicitly mark this as a view - SQLAlchemy currently creates
+    an empty table for it
+    """
+    __tablename__ = "__client_state_view"
 
     id = Column(String, primary_key=True, default = _gen_uuid)
     name = Column(String, unique=True, nullable=False)
