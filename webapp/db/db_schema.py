@@ -104,6 +104,28 @@ class DbClientCommitAccess(Base):
         self.access_time = access_time
 
 
+class DbCommandStatus(str, Enum):
+    PENDING = 'PENDING'
+    IN_PROGRESS = 'IN_PROGRESS'
+    SUCCESSFUL = 'SUCCESSFUL'
+    FAILED = 'FAILED'
+
+class DbCommandQueueEntry(Base):
+    """ Table for tracking commands enqueued for a client. """
+    ___tablename__ = "client_command_queue"
+
+    id = Column(String, primary_key=True, default = _gen_uuid)
+    client_id: Mapped[String] = mapped_column(ForeignKey('client.id'))
+    command = Column(String)
+    priority = Column(Integer)
+    created = Column(DateTime)
+
+    status = Column(DbCommandStatus)
+
+    acknowledged = Column(DateTime)
+    completed = Column(DateTime)
+
+
 class DbClientStateView(Base):
     """
     Db Model class for the non-manifested view that displays the latest state for each client
