@@ -39,7 +39,7 @@ services:
   git-pull:
     <<: *test-container
     profiles: ["tests"]
-    entrypoint: ['python3', '-m', 'test.test_git_pull']
+    entrypoint: ['python3', '-m', 'pytest', 'test/test_git_pull.py']
 
 
   db-profile:
