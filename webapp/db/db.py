@@ -127,6 +127,14 @@ def _get_queue_info(session: Session, client_name: str) -> tuple[int, DbCommandQ
         .order_by(DbCommandQueueEntry.priority.desc(), DbCommandQueueEntry.created.asc()))
     return queue_length, next_command
 
+def enqueue_command(client_name: str, command: str, priority: int = 1, created: datetime = None):
+    with DbSession() as session:
+        client = _get_client_by_name(session, client_name)
+        queue_entry = DbCommandQueueEntry(client.id, command, priority)
+        queue_entry.created = created or datetime.now()
+        session.add(queue_entry)
+        session.commit()
+
 def get_next_command(client_name: str) -> models.CommandQueueResponse:
     """ Get the next incomplete command in the client's command queue """
     with DbSession() as session:

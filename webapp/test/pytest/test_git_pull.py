@@ -2,8 +2,6 @@ from os import environ
 import requests
 import time
 from requests.auth import HTTPBasicAuth
-from db import db
-from util import httpd_utils
 
 import logging
 from pathlib import Path
@@ -15,14 +13,8 @@ logger = logging.getLogger()
 
 
 GM_ADDRESS = environ['GM_ADDRESS']
-CALLBACK_ADDRESS = environ['CALLBACK_ADDRESS']
 CLIENT_NAME = environ['CLIENT_NAME']
 TEST_PW = "TEST-PW"
-
-STATE_DICT = {
-    'challenge_secret': None,
-    'id_secret': None
-}
 
 @pytest.fixture(scope="module", autouse=True)
 def wait_on_startup():

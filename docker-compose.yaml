@@ -23,6 +23,8 @@ services:
       context: .
       dockerfile: tests.Dockerfile
     profiles: ["auth-exchange-test"]
+    env_file:
+      - tests.env
     image: glidein-manager-tests
     depends_on:
       - gm-file-server

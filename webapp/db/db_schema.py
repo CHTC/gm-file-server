@@ -125,6 +125,14 @@ class DbCommandQueueEntry(Base):
     acknowledged = Column(DateTime)
     completed = Column(DateTime)
 
+    def __init__(self, client_id: str, command: str, priority: int):
+        self.id = _gen_uuid()
+        self.client_id = client_id
+        self.command = command
+        self.priority = priority
+        self.created = datetime.now()
+        self.status = DbCommandStatus.PENDING
+
 
 class DbClientStateView(Base):
     """
