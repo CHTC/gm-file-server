@@ -112,7 +112,7 @@ class DbCommandStatus(str, Enum):
 
 class DbCommandQueueEntry(Base):
     """ Table for tracking commands enqueued for a client. """
-    ___tablename__ = "client_command_queue"
+    __tablename__ = "client_command_queue"
 
     id = Column(String, primary_key=True, default = _gen_uuid)
     client_id: Mapped[String] = mapped_column(ForeignKey('client.id'))
@@ -120,7 +120,7 @@ class DbCommandQueueEntry(Base):
     priority = Column(Integer)
     created = Column(DateTime)
 
-    status = Column(DbCommandStatus)
+    status = Column(String)
 
     acknowledged = Column(DateTime)
     completed = Column(DateTime)

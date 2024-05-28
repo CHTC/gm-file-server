@@ -2,24 +2,10 @@ volumes:
   gmfs-data-vol:
   gmfs-git-vol:
 services:
-  # Main Services
-  gm-file-server-init:
-    image: glidein-manager-file-server
-    build: .
-    volumes:
-      - gmfs-data-vol:/etc/gm-file-server/data
-      - ./volumes/sql:/tmp/sql
-    entrypoint: 
-      - sh
-      - -c
-      - >
-        sqlite3 /etc/gm-file-server/data/db.sqlite -init /tmp/sql/init_local_db.sql; 
-        chown apache:apache /etc/gm-file-server/data/db.sqlite
+  # Main Service
   gm-file-server:
     image: glidein-manager-file-server
     build: .
-    depends_on:
-      - gm-file-server-init
     environment:
       - REPO_URL=git@github.com:mwestphall/glidein-manager-test-upstream.git
       - SSH_KEY=/mnt/ssh/id_rsa
@@ -32,9 +18,12 @@ services:
       - "8080:80"
 
   # Test Containers
-  sample-client:
-    image: glidein-manager-file-server
-    build: .
+  sample-client: &test-container
+    build:
+      context: .
+      dockerfile: tests.Dockerfile
+    profiles: ["auth-exchange-test"]
+    image: glidein-manager-tests
     depends_on:
       - gm-file-server
     environment:
@@ -43,7 +32,15 @@ services:
       - CALLBACK_ADDRESS=http://sample-client:8089/public/challenge/response
       - CLIENT_NAME=sample-client
     working_dir: /srv/app
-    entrypoint: ['uvicorn', 'test.test_client:app', '--host', '0.0.0.0', '--port', '8089']
+    volumes:
+      - gmfs-data-vol:/etc/gm-file-server/data
+    entrypoint: ['uvicorn', 'test.test_auth_exchange:app', '--host', '0.0.0.0', '--port', '8089']
+
+  git-pull:
+    <<: *test-container
+    profiles: ["tests"]
+    entrypoint: ['python3', '-m', 'test.test_git_pull']
+
 
   db-profile:
     profiles: ["db-test"]
