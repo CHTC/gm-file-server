@@ -6,10 +6,10 @@ from db import db
 from util import httpd_utils
 
 import logging
-from contextlib import asynccontextmanager
 from pathlib import Path
 import subprocess
 import pytest
+from .test_util import populate_db, reset_db
 
 logger = logging.getLogger()
 
@@ -25,16 +25,15 @@ STATE_DICT = {
 }
 
 @pytest.fixture(scope="module", autouse=True)
-def prepopulate_db():
-    """Before all tests: Place a sample client in the database, then give it a password """
+def wait_on_startup():
     time.sleep(3)
-    with db.DbSession() as session:
-        session.add(db.DbClient(CLIENT_NAME))
-        session.commit()
 
-    httpd_utils.add_httpd_user(CLIENT_NAME, TEST_PW)
-
+@pytest.fixture(autouse=True)
+def setup_teardown():
+    """Before all tests: Place a sample client in the database, then give it a password """
+    populate_db()
     yield
+    reset_db()
 
 def test_auth_git_pull():
     """ Step 1: Submit an authenticated git clone request to the object server. """
