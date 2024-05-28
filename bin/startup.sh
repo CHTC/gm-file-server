@@ -27,6 +27,11 @@ touch $DATA_DIR/.htpasswd && chown apache:apache $DATA_DIR/.htpasswd
 
 # start fastapi
 su -l $HTTPD_USER -s /bin/bash -c "cd /srv/app; nohup uvicorn app:app --host 0.0.0.0 --port 8089" &
+UVICORN_PID=$!
 
 # Start httpd
-httpd -D FOREGROUND
+httpd -D FOREGROUND &
+HTTPD_PID=$!
+
+# exit if either uvicorn or httpd dies
+wait -n $UVICORN_PID $HTTPD_PID

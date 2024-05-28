@@ -1,7 +1,8 @@
 from pydantic import BaseModel, Field
+from enum import Enum
 from typing import Optional
 from datetime import datetime
-from db.db_schema import DbClientRepoAccess, DbClientAuthSession
+from db.db_schema import DbClientCommitAccess, DbClientAuthEvent, DbClientStateView
 
 
 
@@ -29,37 +30,52 @@ class RepoListing(BaseModel):
     commit_hash: str = Field(description="Hash of the latest commit for the repository")
 
 
-class ClientGitRepoStatus(BaseModel):
+class ClientAccessStatus(BaseModel):
     access_time: datetime
     commit_hash: str
 
     @classmethod
-    def from_db(cls, entity: DbClientRepoAccess):
+    def from_db(cls, entity: DbClientCommitAccess):
         if entity is None:
             return None
         
-        return ClientGitRepoStatus(
+        return ClientAccessStatus(
             access_time=entity.access_time,
             commit_hash=entity.commit_hash
         )
 
 class ClientAuthState(BaseModel):
     state: str
+    initiated: Optional[datetime]
     expires: Optional[datetime]
 
     @classmethod
-    def from_db(cls, entity: DbClientAuthSession):
+    def from_db(cls, entity: DbClientAuthEvent):
         if entity is None:
             return None
         
         return ClientAuthState(
             state=entity.auth_state,
+            initiated=entity.initiated,
             expires=entity.expires)
 
 class ClientStatus(BaseModel):
     client_name: str
     auth_state: Optional[ClientAuthState]
-    repo_access: Optional[ClientGitRepoStatus]
+    repo_access: Optional[ClientAccessStatus]
+
+    @classmethod
+    def from_db(cls, entity: DbClientStateView):
+        return ClientStatus(
+            client_name=entity.name,
+            auth_state=ClientAuthState(
+                state=entity.auth_state,
+                initiated=entity.initiated,
+                expires=entity.expires) if entity.auth_state else None,
+            repo_access=ClientAccessStatus(
+                access_time=entity.access_time,
+                commit_hash=entity.commit_hash) if entity.commit_hash else None)
+
 
 
 class SecretVersion(BaseModel):
@@ -67,3 +83,17 @@ class SecretVersion(BaseModel):
     secret: str
     iat: datetime
     exp: datetime
+
+
+class AuthStateQuery(Enum):
+    """ Query parameter enum for  """
+    # Auth states that are recorded in the DB
+    PENDING = 'PENDING'
+    SUCCESSFUL = 'SUCCESSFUL'
+    FAILED = 'FAILED'
+    # A successful auth entry whose expiration has passed
+    EXPIRED = 'EXPIRED'
+    # Do not filter on auth state in the query
+    ANY = 'ANY'
+    # Has not yet attempted to authenticate
+    NONE = 'NONE'

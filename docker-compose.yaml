@@ -2,6 +2,7 @@ volumes:
   gmfs-data-vol:
   gmfs-git-vol:
 services:
+  # Main Services
   gm-file-server-init:
     image: glidein-manager-file-server
     build: .
@@ -30,6 +31,7 @@ services:
     ports:
       - "8080:80"
 
+  # Test Containers
   sample-client:
     image: glidein-manager-file-server
     build: .
@@ -43,3 +45,16 @@ services:
     working_dir: /srv/app
     entrypoint: ['uvicorn', 'test.test_client:app', '--host', '0.0.0.0', '--port', '8089']
 
+  db-profile:
+    profiles: ["db-test"]
+    image: glidein-manager-file-server
+    build: .
+    environment:
+      - API_PREFIX=/api
+      - GM_ADDRESS=http://gm-file-server
+      - CALLBACK_ADDRESS=http://sample-client:8089/public/challenge/response
+      - CLIENT_NAME=sample-client
+    working_dir: /srv/app
+    entrypoint: ['python3', '-m', 'test.benchmark_db']
+    volumes:
+      - gmfs-data-vol:/etc/gm-file-server/data
