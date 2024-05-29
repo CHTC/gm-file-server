@@ -1,20 +1,15 @@
 from os import environ
 import requests
 import time
-from requests.auth import HTTPBasicAuth
 
 import logging
 from pathlib import Path
 import subprocess
 import pytest
-from .test_util import populate_db, reset_db
+from .test_util import populate_db, reset_db, GM_ADDRESS, CLIENT_NAME, TEST_PW, TEST_AUTH
 
 logger = logging.getLogger()
 
-
-GM_ADDRESS = environ['GM_ADDRESS']
-CLIENT_NAME = environ['CLIENT_NAME']
-TEST_PW = "TEST-PW"
 
 @pytest.fixture(scope="module", autouse=True)
 def wait_on_startup():
@@ -52,7 +47,7 @@ def test_status_report():
     list_repo_addr = f"{GM_ADDRESS}/api/public/repo-status"
     report_access_addr = f"{GM_ADDRESS}/api/private/log-repo-access"
     repo = requests.get(list_repo_addr).json()
-    requests.post(report_access_addr, json=repo, auth=HTTPBasicAuth(CLIENT_NAME, TEST_PW))
+    requests.post(report_access_addr, json=repo, auth=TEST_AUTH)
     status_addr = f"{GM_ADDRESS}/api/public/client-status"
 
     status = requests.get(status_addr).json()

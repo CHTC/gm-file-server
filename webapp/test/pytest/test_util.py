@@ -1,5 +1,6 @@
 from os import environ
 from db import db
+from requests.auth import HTTPBasicAuth
 
 from util import httpd_utils
 from sqlalchemy import delete
@@ -10,6 +11,7 @@ GM_ADDRESS = environ['GM_ADDRESS']
 CALLBACK_ADDRESS = environ['CALLBACK_ADDRESS']
 CLIENT_NAME = environ['CLIENT_NAME']
 TEST_PW = "TEST-PW"
+TEST_AUTH=HTTPBasicAuth(CLIENT_NAME, TEST_PW)
 
 def populate_db():
     """Before all tests: Place a sample client in the database, then give it a password """

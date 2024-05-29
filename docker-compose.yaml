@@ -22,7 +22,7 @@ services:
     build:
       context: .
       dockerfile: tests.Dockerfile
-    profiles: ["auth-exchange-test"]
+    profiles: ["auth-test"]
     env_file:
       - tests.env
     image: glidein-manager-tests
@@ -40,8 +40,8 @@ services:
 
   git-pull:
     <<: *test-container
-    profiles: ["tests"]
-    entrypoint: ['python3', '-m', 'pytest', 'test/pytest']
+    profiles: ["pytests"]
+    entrypoint: ['python3', '-m', 'pytest', 'test/pytest/${TEST_PKG}']
 
 
   db-profile:
