@@ -17,12 +17,12 @@ services:
     ports:
       - "8080:80"
 
-  # Test Containers
-  sample-client: &test-container
+  # Tests Container
+  pytests:
+    profiles: ["pytests"]
     build:
       context: .
       dockerfile: tests.Dockerfile
-    profiles: ["auth-test"]
     env_file:
       - tests.env
     image: glidein-manager-tests
@@ -31,29 +31,9 @@ services:
     environment:
       - API_PREFIX=/api
       - GM_ADDRESS=http://gm-file-server
-      - CALLBACK_ADDRESS=http://sample-client:8089/public/challenge/response
-      - CLIENT_NAME=sample-client
+      - CALLBACK_ADDRESS=http://pytests:8089/public/challenge/response
+      - CLIENT_NAME=pytests
     working_dir: /srv/app
     volumes:
       - gmfs-data-vol:/etc/gm-file-server/data
-    entrypoint: ['uvicorn', 'test.test_auth_exchange:app', '--host', '0.0.0.0', '--port', '8089']
-
-  git-pull:
-    <<: *test-container
-    profiles: ["pytests"]
-    entrypoint: ['python3', '-m', 'pytest', 'test/pytest/${TEST_PKG}']
-
-
-  db-profile:
-    profiles: ["db-test"]
-    image: glidein-manager-file-server
-    build: .
-    environment:
-      - API_PREFIX=/api
-      - GM_ADDRESS=http://gm-file-server
-      - CALLBACK_ADDRESS=http://sample-client:8089/public/challenge/response
-      - CLIENT_NAME=sample-client
-    working_dir: /srv/app
-    entrypoint: ['python3', '-m', 'test.benchmark_db']
-    volumes:
-      - gmfs-data-vol:/etc/gm-file-server/data
+    entrypoint: ['sh', '-c', 'sleep 3; python3 -m pytest -s test/${TEST_PKG}']

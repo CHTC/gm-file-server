@@ -10,7 +10,7 @@ import subprocess
 from models.models import CommandQueueResponse
 from datetime import datetime, timedelta
 import pytest
-from .test_util import populate_db, reset_db, GM_ADDRESS, CLIENT_NAME, TEST_AUTH
+from .test_util import populate_db, reset_db, set_htpasswd, unset_htpasswd, GM_ADDRESS, CLIENT_NAME, TEST_AUTH
 
 logger = logging.getLogger()
 
@@ -22,16 +22,14 @@ TEST_PW = "TEST-PW"
 
 GET_CMD_ADDR = f"{GM_ADDRESS}/api/private/command-queue"
 
-@pytest.fixture(scope="module", autouse=True)
-def wait_on_startup():
-    time.sleep(3)
-
 @pytest.fixture(autouse=True)
 def setup_teardown():
     """Before all tests: Place a sample client in the database, then give it a password """
     populate_db()
+    set_htpasswd()
     yield
     reset_db()
+    unset_htpasswd()
 
 def test_read_command_queue():
     """ Enqueue a sample command for the client """
