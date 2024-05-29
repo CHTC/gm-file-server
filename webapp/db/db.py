@@ -165,8 +165,9 @@ def dequeue_command(client_name: str, command_status: DbCommandStatus) -> models
 
         active_command.completed = datetime.now()
         active_command.status = command_status
+        session.add(active_command)
 
         session.commit()
 
-        return models.CommandQueueResponse(queue_length=queue_length)
+        return models.CommandQueueResponse(queue_length=queue_length - 1, command=None)
 

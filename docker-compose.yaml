@@ -36,4 +36,4 @@ services:
     working_dir: /srv/app
     volumes:
       - gmfs-data-vol:/etc/gm-file-server/data
-    entrypoint: ['sh', '-c', 'sleep 3; python3 -m pytest -s test/${TEST_PKG}']
+    entrypoint: ['sh', '-c', 'sleep 2; python3 -m pytest -s test/${TEST_PKG}']

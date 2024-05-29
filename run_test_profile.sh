@@ -1,2 +1,2 @@
 #!/bin/bash
-docker-compose down -v; docker-compose --profile $1 up --build
+docker-compose down -v; docker-compose --profile pytests up --build --abort-on-container-exit
