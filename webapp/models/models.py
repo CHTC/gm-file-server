@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from enum import Enum
 from typing import Optional
 from datetime import datetime
-from db.db_schema import DbClientCommitAccess, DbClientAuthEvent, DbClientStateView
+from db.db_schema import DbClientCommitAccess, DbClientAuthEvent, DbClientStateView, DbCommandStatus
 
 
 
@@ -97,3 +97,16 @@ class AuthStateQuery(Enum):
     ANY = 'ANY'
     # Has not yet attempted to authenticate
     NONE = 'NONE'
+
+
+class CommandQueueResponse(BaseModel):
+    """ Response containing the queue length of a client's command queue,
+    and the next command in the queue if present
+    """
+    queue_length: int
+    command: Optional[str]
+
+class CommandQueueCompletionRequest(BaseModel):
+    """ Request sent by a client indicating the completion status of the 
+    first command in its queue """
+    status: DbCommandStatus

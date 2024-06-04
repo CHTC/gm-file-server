@@ -62,6 +62,18 @@ def log_repo_access(repo: models.RepoListing, credentials: Annotated[HTTPBasicCr
     db.log_client_repo_access(credentials.username, repo.commit_hash)
     return { "status": "acknowledged" }
 
+@app.get('/private/command-queue')
+def get_next_command(credentials: Annotated[HTTPBasicCredentials, Depends(security)]) -> models.CommandQueueResponse:
+    """ Get the next command in the authenticated client's command queue """
+    return db.get_next_command(credentials.username)
+
+@app.post('/private/command-queue')
+def complete_command(
+        completion_status: models.CommandQueueCompletionRequest,
+        credentials: Annotated[HTTPBasicCredentials, Depends(security)]) -> models.CommandQueueResponse:
+    """ Mark the head of the authenticated client's command queue as complete """
+    return db.dequeue_command(credentials.username, completion_status.status)
+
 def follow_up_challenge(request: models.ChallengeInitiateRequest, challenge: models.ChallengeInitiateResponse):
     """ Background task that follows up on a challenge initiated by a client. """
     logger.info(f"C/R: Sending callback to {request.callback_address}")
