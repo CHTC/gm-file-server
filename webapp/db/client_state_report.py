@@ -40,7 +40,13 @@ FROM client
 LEFT JOIN latest_auth ON latest_auth.client_id = client.id
 LEFT JOIN latest_commit ON latest_commit.client_id = client.id
 -- TODO These are some ugly where clauses to handle nullable fields
-WHERE (:auth_state = 'ANY' OR latest_auth.auth_state = :auth_state OR (:auth_state IS NULL AND latest_auth.auth_state is NULL))
+WHERE (
+    :auth_state = 'ANY' OR 
+    CASE 
+        WHEN latest_auth.auth_state = 'SUCCESSFUL' AND latest_auth.expires < :report_time THEN 'EXPIRED'
+        ELSE latest_auth.auth_state
+    END = :auth_state OR 
+    (:auth_state IS NULL AND latest_auth.auth_state is NULL))
 AND   (:latest_commit IS NULL OR (COALESCE(latest_commit.commit_hash = :commit_hash, 0)) = :latest_commit)
 """
 

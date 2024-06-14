@@ -171,3 +171,21 @@ def dequeue_command(client_name: str, command_status: DbCommandStatus) -> models
 
         return models.CommandQueueResponse(queue_length=queue_length - 1, command=None)
 
+def reconcile_active_clients(active_clients: list[str]):
+    """ Given a list of active system clients, create all clients that don't exist. Mark 
+    all clients that do exist but aren't in the list as inactive
+    """
+    with DbSession() as session:
+        all_clients = session.scalars(select(DbClient)).all()
+        # Set all existing clients' valid status to whether they're in the list
+        for client in all_clients:
+            client.valid = client.name in active_clients
+            session.add(client)
+        
+        missing_clients = set(active_clients) - set(c.name for c in all_clients)
+        for client_name in missing_clients:
+            session.add(DbClient(client_name))
+
+        session.commit()
+
+

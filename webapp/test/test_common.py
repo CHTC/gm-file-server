@@ -1,11 +1,14 @@
 from os import environ
 from db import db, db_schema
 from requests.auth import HTTPBasicAuth
+from sys import stdout
 
 from util import httpd_utils
 from sqlalchemy import delete
 
 import logging
+logging.basicConfig(stream=stdout, level=logging.DEBUG)
+logger = logging.getLogger()
 
 GM_ADDRESS = environ['GM_ADDRESS']
 CALLBACK_ADDRESS = environ['CALLBACK_ADDRESS']

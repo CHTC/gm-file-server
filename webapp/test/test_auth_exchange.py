@@ -13,7 +13,7 @@ import logging
 from multiprocessing import Process, Queue
 import pytest
 import uvicorn
-from .test_util import populate_db, reset_db, unset_htpasswd, GM_ADDRESS, CALLBACK_ADDRESS, CLIENT_NAME, CLIENT_ID
+from .test_common import populate_db, reset_db, unset_htpasswd, GM_ADDRESS, CALLBACK_ADDRESS, CLIENT_NAME, CLIENT_ID
 
 logger = logging.getLogger()
 

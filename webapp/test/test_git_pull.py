@@ -9,7 +9,7 @@ import pytest
 from db import db
 from models.models import ClientStatus
 from datetime import datetime, timedelta
-from .test_util import populate_db, reset_db, set_htpasswd, unset_htpasswd, GM_ADDRESS, CLIENT_NAME, TEST_PW, TEST_AUTH, CLIENT_ID
+from .test_common import populate_db, reset_db, set_htpasswd, unset_htpasswd, GM_ADDRESS, CLIENT_NAME, TEST_PW, TEST_AUTH, CLIENT_ID
 
 LIST_REPO_ADDR = f"{GM_ADDRESS}/api/public/repo-status"
 STATUS_ADDR = f"{GM_ADDRESS}/api/public/client-status"

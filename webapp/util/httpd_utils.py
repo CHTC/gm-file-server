@@ -27,7 +27,7 @@ def prune_auth_file():
     """ Remove all users' whose auth session has expired from the httpd password file """
     active_clients = db.get_client_status_report(auth_state=AuthStateQuery.SUCCESSFUL)
     active_client_names = [cl.client_name for cl in active_clients]
-    
+    print(active_client_names)
     # Read the whole htpasswd file line by line
     with open(HTTPD_PASSWD_FILE, 'r') as htpasswd:
         auth_lines = htpasswd.readlines()

@@ -8,13 +8,15 @@ from sys import stdout
 from util.httpd_utils import add_httpd_user
 from secrets import token_urlsafe
 from scheduler import init_scheduler
-from typing import Optional, Literal
+from typing import Optional
 
 from contextlib import asynccontextmanager
 
 import logging
 import requests
 from datetime import datetime, timedelta
+
+from util import config_utils
 
 logging.basicConfig(stream=stdout, level=logging.INFO)
 logger = logging.getLogger()
@@ -24,6 +26,7 @@ logger = logging.getLogger()
 async def lifespan(app: FastAPI):
     git_utils.trust_upstream_host()
     git_utils.clone_repo()
+    config_utils.configure_active_clients()
     init_scheduler()
     yield
 

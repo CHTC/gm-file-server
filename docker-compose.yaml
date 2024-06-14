@@ -12,6 +12,7 @@ services:
       - API_PREFIX=/api
     volumes:
       - ./volumes/ssh/:/mnt/ssh:ro
+      - ./volumes/config/:/etc/gm-file-server/config:ro
       - gmfs-git-vol:/var/lib/git
       - gmfs-data-vol:/etc/gm-file-server/data
     ports:

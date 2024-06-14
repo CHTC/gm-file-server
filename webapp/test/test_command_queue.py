@@ -10,7 +10,7 @@ import subprocess
 from models.models import CommandQueueResponse
 from datetime import datetime, timedelta
 import pytest
-from .test_util import populate_db, reset_db, set_htpasswd, unset_htpasswd, GM_ADDRESS, CLIENT_NAME, TEST_AUTH
+from .test_common import populate_db, reset_db, set_htpasswd, unset_htpasswd, GM_ADDRESS, CLIENT_NAME, TEST_AUTH
 
 logger = logging.getLogger()
 
