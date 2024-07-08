@@ -1,7 +1,8 @@
 FROM almalinux:9
 
-ENV DATA_DIR   /etc/gm-file-server/data
-ENV API_PREFIX /api
+ENV DATA_DIR    /etc/gm-file-server/data
+ENV SECRETS_DIR /etc/gm-file-server/secrets
+ENV API_PREFIX  /api
 
 RUN yum update -y && \
     yum install -y git httpd-tools python3-pip && \

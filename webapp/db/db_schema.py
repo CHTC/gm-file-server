@@ -155,3 +155,36 @@ class DbClientStateView(Base):
     access_time = Column(DateTime)
 
 
+
+class DbSecretSource(Base):
+    """ Table for tracking the sources of secrets that the Glidein Manager provides to clients """
+
+    __tablename__ = "secret_source"
+
+    id = Column(String, primary_key=True, default= _gen_uuid)
+    name = Column(String, unique=True)
+    source = Column(String)
+    valid = Column(Boolean, default=True)
+
+
+    def __init__(self, name, source):
+        self.id = _gen_uuid()
+        self.name = name
+        self.source = source
+
+class DbClientSecretAccess(Base):
+    """ Table for tracking access to secrets by clients """
+
+    __tablename__ = "client_secret_access"
+    
+    id = Column(String, primary_key=True, default = _gen_uuid)
+    client_id: Mapped[String] = mapped_column(ForeignKey('client.id'))
+    
+    secret_id: Mapped[String] = mapped_column(ForeignKey('secret_source.id'))
+    access_time = Column(DateTime)
+
+    def __init__(self, client_id, secret_id, access_time = None):
+        self.id = _gen_uuid()
+        self.client_id = client_id
+        self.secret_id = secret_id
+        self.access_time = access_time or datetime.now()

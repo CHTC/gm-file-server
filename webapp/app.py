@@ -9,6 +9,7 @@ from util.httpd_utils import add_httpd_user
 from secrets import token_urlsafe
 from scheduler import init_scheduler
 from typing import Optional
+from secrets_store import secrets
 
 from contextlib import asynccontextmanager
 
@@ -27,6 +28,8 @@ async def lifespan(app: FastAPI):
     git_utils.trust_upstream_host()
     git_utils.clone_repo()
     config_utils.configure_active_clients()
+    secrets.configure_local_secrets()
+
     init_scheduler()
     yield
 
@@ -76,6 +79,20 @@ def complete_command(
         credentials: Annotated[HTTPBasicCredentials, Depends(security)]) -> models.CommandQueueResponse:
     """ Mark the head of the authenticated client's command queue as complete """
     return db.dequeue_command(credentials.username, completion_status.status)
+
+
+@app.get('/private/secrets')
+def get_secret_sources(credentials: Annotated[HTTPBasicCredentials, Depends(security)]) -> list[models.SecretSource]:
+    """ Get the list of secrets available to the authenticated client """
+    return db.get_secret_sources(credentials.username)
+
+@app.get('/private/secrets/{secret_name}')
+def get_secret_value(secret_name: str, credentials: Annotated[HTTPBasicCredentials, Depends(security)]) -> models.SecretValue:
+    """ Return the value of a secret to a client. """
+    db.log_secret_access(credentials.username, secret_name)
+    return models.SecretValue(
+        secret_name=secret_name,
+        secret_value=secrets.get_secret_value(db.get_secret_source(secret_name)))
 
 def follow_up_challenge(request: models.ChallengeInitiateRequest, challenge: models.ChallengeInitiateResponse):
     """ Background task that follows up on a challenge initiated by a client. """

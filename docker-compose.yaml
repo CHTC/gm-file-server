@@ -4,7 +4,7 @@ volumes:
 services:
   # Main Service
   gm-file-server:
-    image: glidein-manager-file-server
+    image: hub.opensciencegrid.org/mwestphall/glidein-manager-file-server
     build: .
     environment:
       - REPO_URL=git@github.com:mwestphall/glidein-manager-test-upstream.git
@@ -13,6 +13,7 @@ services:
     volumes:
       - ./volumes/ssh/:/mnt/ssh:ro
       - ./volumes/config/:/etc/gm-file-server/config:ro
+      - ./volumes/sample-secrets/:/etc/gm-file-server/secrets:ro
       - gmfs-git-vol:/var/lib/git
       - gmfs-data-vol:/etc/gm-file-server/data
     ports:

@@ -1,9 +1,10 @@
 FROM almalinux:9
-ENV REPO_URL   git@github.com/CHTC/gm-file-server
-ENV SSH_KEY    /mnt/ssh_deploy_key
-ENV DATA_DIR   /etc/gm-file-server/data
-ENV CONFIG_DIR /etc/gm-file-server/config
-ENV API_PREFIX /api
+ENV REPO_URL    git@github.com/CHTC/gm-file-server
+ENV SSH_KEY     /mnt/ssh_deploy_key
+ENV DATA_DIR    /etc/gm-file-server/data
+ENV CONFIG_DIR  /etc/gm-file-server/config
+ENV SECRETS_DIR /etc/gm-file-server/secrets
+ENV API_PREFIX  /api
 
 RUN yum update -y && \
     yum install -y git httpd gitweb sqlite python3-pip && \

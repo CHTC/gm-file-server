@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from enum import Enum
 from typing import Optional
 from datetime import datetime
-from db.db_schema import DbClientCommitAccess, DbClientAuthEvent, DbClientStateView, DbCommandStatus
+from db.db_schema import DbClientCommitAccess, DbClientAuthEvent, DbClientStateView, DbCommandStatus, DbSecretSource
 
 
 
@@ -110,3 +110,17 @@ class CommandQueueCompletionRequest(BaseModel):
     """ Request sent by a client indicating the completion status of the 
     first command in its queue """
     status: DbCommandStatus
+
+class SecretSource(BaseModel):
+    """ Listing for a secret source provided by the GMOS to clients"""
+    secret_name: str
+    secret_source: str
+
+    @classmethod
+    def from_db(cls, entity: DbSecretSource):
+        return SecretSource(secret_name=entity.name, secret_source=entity.source)
+
+class SecretValue(BaseModel):
+    """ The active value of a secret version """
+    secret_name: str
+    secret_value: str

@@ -1,6 +1,9 @@
 from sqlalchemy import create_engine, select, func
 from sqlalchemy.orm import sessionmaker, Session
-from .db_schema import Base, DbClient, DbClientAuthEvent, DbAuthState, DbClientCommitAccess, DbClientAuthChallenge, DbGitCommit, DbCommandQueueEntry, DbCommandStatus
+from .db_schema import (
+    Base, DbClient, DbClientAuthEvent, DbAuthState, DbClientCommitAccess, DbClientAuthChallenge,
+    DbGitCommit, DbCommandQueueEntry, DbCommandStatus, DbSecretSource, DbClientSecretAccess
+)
 from .client_state_report import query_client_states
 from os import environ
 from models import models
@@ -8,6 +11,7 @@ from fastapi import HTTPException
 from secrets import token_urlsafe
 from datetime import datetime
 import logging
+from secrets_store.secrets import LOCAL_SECRET_SOURCE
 from datetime import datetime
 
 logger = logging.getLogger()
@@ -188,4 +192,57 @@ def reconcile_active_clients(active_clients: list[str]):
 
         session.commit()
 
+def get_secret_source(secret_name: str) -> DbSecretSource:
+    """ Return the list of all secrets available to the given client """
+    with DbSession() as session:
+        secret = session.scalar(select(DbSecretSource).where(DbSecretSource.name == secret_name))
+        if secret is None:
+            raise HTTPException(404, "No secret source with given name")
+        return secret
 
+
+def get_secret_sources(client_name: str) -> list[models.SecretSource]:
+    """ Return the list of all secrets available to the given client """
+    with DbSession() as session:
+        client = _get_client_by_name(session, client_name)
+        if client is None:
+            raise HTTPException(404, "Given client name is invalid")
+        
+        secret_sources = session.scalars(select(DbSecretSource)
+            .where(DbSecretSource.valid == True)).all()
+
+        return [models.SecretSource.from_db(s) for s in secret_sources]
+
+def log_secret_access(client_name: str, secret_name: str):
+    """ Log that a client accessed a secret """
+    with DbSession() as session:
+        client = _get_client_by_name(session, client_name)
+        if client is None:
+            raise HTTPException(404, "Given client name is invalid")
+        
+        secret = session.scalar(select(DbSecretSource)
+            .where(DbSecretSource.name == secret_name)
+            .where(DbSecretSource.valid == True))
+        if secret is None:
+            raise HTTPException(404, "No secret source with given name")
+        
+        session.add(DbClientSecretAccess(client.id, secret.id))
+
+        session.commit()
+        
+def reconcile_local_secrets(active_secrets: list[str]):
+    """ Given a list of active locally hosted secrets, create all secret sources that don't exist. 
+    Mark local secrets that do exist but aren't in the list as inactive
+    """
+    with DbSession() as session:
+        all_local_secrets = session.scalars(select(DbSecretSource)
+            .where(DbSecretSource.source == LOCAL_SECRET_SOURCE)).all()
+        for secret in all_local_secrets:
+            secret.valid = secret.name in active_secrets
+            session.add(secret)
+        
+        missing_secrets = set(active_secrets) - set(s.name for s in all_local_secrets)
+        for secret_name in missing_secrets:
+            session.add(DbSecretSource(secret_name, LOCAL_SECRET_SOURCE))
+
+        session.commit()
