@@ -115,10 +115,11 @@ class SecretSource(BaseModel):
     """ Listing for a secret source provided by the GMOS to clients"""
     secret_name: str
     secret_source: str
+    secret_version: str
 
     @classmethod
     def from_db(cls, entity: DbSecretSource):
-        return SecretSource(secret_name=entity.name, secret_source=entity.source)
+        return SecretSource(secret_name=entity.name, secret_source=entity.source, secret_version=entity.version)
 
 class SecretValue(BaseModel):
     """ The active value of a secret version """

@@ -11,7 +11,6 @@ from fastapi import HTTPException
 from secrets import token_urlsafe
 from datetime import datetime
 import logging
-from secrets_store.secrets import LOCAL_SECRET_SOURCE
 from datetime import datetime
 
 logger = logging.getLogger()
@@ -230,19 +229,23 @@ def log_secret_access(client_name: str, secret_name: str):
 
         session.commit()
         
-def reconcile_local_secrets(active_secrets: list[str]):
+def reconcile_local_secrets(active_secrets: list[models.SecretSource]):
     """ Given a list of active locally hosted secrets, create all secret sources that don't exist. 
     Mark local secrets that do exist but aren't in the list as inactive
     """
+    active_names = [a.secret_name for a in active_secrets]
+    secret_source = active_secrets[0].secret_source if len(active_secrets) else None
     with DbSession() as session:
         all_local_secrets = session.scalars(select(DbSecretSource)
-            .where(DbSecretSource.source == LOCAL_SECRET_SOURCE)).all()
+            .where(DbSecretSource.source == secret_source)).all()
         for secret in all_local_secrets:
-            secret.valid = secret.name in active_secrets
+            secret.valid = secret.name in active_names
             session.add(secret)
-        
-        missing_secrets = set(active_secrets) - set(s.name for s in all_local_secrets)
-        for secret_name in missing_secrets:
-            session.add(DbSecretSource(secret_name, LOCAL_SECRET_SOURCE))
+
+        for secret in active_secrets:
+            db_secret = session.scalar(select(DbSecretSource).where(DbSecretSource.name == secret.secret_name)) or \
+                DbSecretSource(secret.secret_name, secret.secret_source)
+            db_secret.version = secret.secret_version
+            session.add(db_secret)
 
         session.commit()

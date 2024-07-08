@@ -164,13 +164,15 @@ class DbSecretSource(Base):
     id = Column(String, primary_key=True, default= _gen_uuid)
     name = Column(String, unique=True)
     source = Column(String)
+    version = Column(String)
     valid = Column(Boolean, default=True)
 
 
-    def __init__(self, name, source):
+    def __init__(self, name, source, version = None):
         self.id = _gen_uuid()
         self.name = name
         self.source = source
+        self.version = version
 
 class DbClientSecretAccess(Base):
     """ Table for tracking access to secrets by clients """
