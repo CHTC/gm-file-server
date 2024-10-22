@@ -90,9 +90,7 @@ def get_secret_sources(credentials: Annotated[HTTPBasicCredentials, Depends(secu
 def get_secret_value(secret_name: str, credentials: Annotated[HTTPBasicCredentials, Depends(security)]) -> models.SecretValue:
     """ Return the value of a secret to a client. """
     db.log_secret_access(credentials.username, secret_name)
-    return models.SecretValue(
-        secret_name=secret_name,
-        secret_value=secrets.get_secret_value(db.get_secret_source(secret_name)))
+    return secrets.get_secret_value(db.get_secret_source(secret_name))
 
 def follow_up_challenge(request: models.ChallengeInitiateRequest, challenge: models.ChallengeInitiateResponse):
     """ Background task that follows up on a challenge initiated by a client. """

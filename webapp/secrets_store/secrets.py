@@ -1,20 +1,22 @@
 from os import environ
 from pathlib import Path
 from db import db
-from models.models import SecretSource
+from models.models import SecretSource, SecretValue
 import base64
 from hashlib import sha256
 
 ON_DISK_SECRETS = Path(environ.get("SECRETS_DIR"))
 LOCAL_SECRET_SOURCE = 'localhost'
 
-def get_secret_value(secret: db.DbSecretSource) -> str:
+def get_secret_value(secret: db.DbSecretSource) -> SecretValue:
     """ Given a secret source from the DB, return the base64-encoded value of that Secret
     TODO: support cases besides reading a secret stored on disk
     """
+    secret_val : str = None
     if secret.source == LOCAL_SECRET_SOURCE:
         with open(ON_DISK_SECRETS / secret.name, 'rb') as secf:
-            return base64.b64encode(secf.read())
+            secret_val = base64.b64encode(secf.read())
+    return SecretValue(secret_name=secret.name, secret_version=secret.version, secret_value=secret_val)
 
 
 def _get_local_secret(sec_path: Path) -> SecretSource:

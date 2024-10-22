@@ -124,4 +124,5 @@ class SecretSource(BaseModel):
 class SecretValue(BaseModel):
     """ The active value of a secret version """
     secret_name: str
+    secret_version: str
     secret_value: str
