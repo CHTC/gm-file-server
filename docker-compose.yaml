@@ -7,8 +7,7 @@ services:
     image: hub.opensciencegrid.org/mwestphall/glidein-manager-file-server
     build: .
     environment:
-      - REPO_URL=git@github.com:mwestphall/glidein-manager-test-upstream.git
-      - SSH_KEY=/mnt/ssh/id_rsa
+      - REPO_URL=https://github.com/mwestphall/glidein-manager-test-upstream.git
       - API_PREFIX=/api
     volumes:
       - ./volumes/ssh/:/mnt/ssh:ro

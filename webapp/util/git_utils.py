@@ -18,7 +18,7 @@ SSH_AUTH_SOCK_RE = re.compile(r'SSH_AUTH_SOCK=([^;]*);')
 # Extract the agent PID from the stdout of ssh-agent
 SSH_AGENT_PID_RE = re.compile(r'SSH_AGENT_PID=([^;]*);')
 # Extract the project name from an upstream URL - assumes clone via SSH
-PROJECT_NAME_RE = re.compile(r'/(.*)\.git')
+PROJECT_NAME_RE = re.compile(r'/([-a-zA-Z0-9]*)\.git')
 # Extract the project host from an upstream URL - assumes clone via SSH
 PROJECT_HOST_RE = re.compile(r'git@(.*):')
 
@@ -59,6 +59,10 @@ def get_repo_name_from_url(repo_url: str):
 
 def trust_upstream_host():
     """ Add a host's fingerprints to known_hosts prior to cloning """
+    if(REPO_URL.startswith('https://')):
+        # no-op, don't need to trust SSH host
+        return
+
     if not (host_match := PROJECT_HOST_RE.search(REPO_URL)):
         raise RuntimeError(f"Unable to determine remote upstream host name from {REPO_URL}")
 
